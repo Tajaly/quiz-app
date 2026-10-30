@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ANSWER_GRACE_MS, COUNTDOWN_MS, type Kart, type Quiz } from '@power-quiz/shared';
+import { ANSWER_GRACE_MS, COUNTDOWN_MS, LIMITS, type Kart, type Quiz } from '@power-quiz/shared';
 import { makeQuiz, RecordingSink } from '../../test/helpers';
 import { LiveSession, SessionError, type ChangeScope } from './LiveSession';
 import { createModeration } from './moderation';
@@ -74,6 +74,15 @@ describe('LiveSession', () => {
       join('Bob');
       expectCode(() => join('Cara'), 'FULL');
       expect(session.joinInfo().joinable).toBe(false);
+    });
+
+    it('fits 300-player races by default and stops at the player limit', () => {
+      const { session, join } = setup();
+      for (let racer = 1; racer <= 300; racer++) join(`Racer ${racer}`);
+      expect(session.joinInfo().joinable).toBe(true);
+      for (let racer = 301; racer <= LIMITS.playersPerSessionMax; racer++) join(`Racer ${racer}`);
+      expect(session.playerCount).toBe(LIMITS.playersPerSessionMax);
+      expectCode(() => join('Latecomer'), 'FULL');
     });
 
     it('rejoins a returning device with its token', () => {

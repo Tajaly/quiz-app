@@ -22,7 +22,8 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "load-test": "node scripts/load-test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

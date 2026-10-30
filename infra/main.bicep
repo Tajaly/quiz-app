@@ -29,8 +29,8 @@ param entraClientId string = ''
 @description('Tenant ID of the Entra ID app registration. Empty means the tenant of this deployment.')
 param entraTenantId string = ''
 
-@description('SKU of the App Service plan (single instance).')
-param appServicePlanSku string = 'B1'
+@description('SKU of the App Service plan (single instance). P0v3 has no WebSocket connection cap; Basic plans (B1–B3) allow at most 350 concurrent WebSockets, too few for 300-player races.')
+param appServicePlanSku string = 'P0v3'
 
 var resourceToken = uniqueString(subscription().id, environmentName, location)
 var tags = {
