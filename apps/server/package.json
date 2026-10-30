@@ -1,0 +1,35 @@
+{
+  "name": "@power-quiz/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Express + Socket.IO server: REST API, live game engine and persistence.",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --import tsx --env-file-if-exists=../../.env src/index.ts",
+    "build": "node build.mjs",
+    "start": "node dist/server.mjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.10.1",
+    "@azure/identity": "^4.14.0",
+    "@power-quiz/shared": "^0.1.0",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "jose": "^6.2.13",
+    "obscenity": "^0.4.6",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/supertest": "^7.2.1",
+    "esbuild": "^0.28.2",
+    "pino-pretty": "^13.2.0",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15"
+  }
+}

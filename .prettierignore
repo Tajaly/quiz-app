@@ -1,0 +1,8 @@
+node_modules
+dist
+.deploy
+coverage
+playwright-report
+test-results
+package-lock.json
+.azure

@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: power-quiz
+
+services:
+  web:
+    # azd restores (`npm install`, skipped while node_modules is newer than package-lock.json) and
+    # runs `npm run build` in the repo root, then zips only the contents of `dist` for zip deploy.
+    project: .
+    language: js
+    host: appservice
+    dist: .deploy
+
+pipeline:
+  # Copied from the azd environment to GitHub repository variables by `azd pipeline config`.
+  variables:
+    - ENTRA_CLIENT_ID
+    - ENTRA_TENANT_ID
+
+hooks:
+  # Creates (once) the Entra ID app registration and stores ENTRA_CLIENT_ID / ENTRA_TENANT_ID.
+  preprovision:
+    windows:
+      shell: pwsh
+      run: ./infra/hooks/preprovision.ps1
+      interactive: true
+    posix:
+      shell: sh
+      # Invoked through `sh` so the script does not need the executable bit (lost when committed from Windows).
+      run: sh ./infra/hooks/preprovision.sh
+      interactive: true
+  # Adds the deployed site URL (WEB_URI) to the app registration's SPA redirect URIs.
+  postprovision:
+    windows:
+      shell: pwsh
+      run: ./infra/hooks/postprovision.ps1
+      interactive: true
+    posix:
+      shell: sh
+      run: sh ./infra/hooks/postprovision.sh
+      interactive: true

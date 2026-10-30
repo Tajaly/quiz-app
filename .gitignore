@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.deploy/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.vite/
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
+.azure/
+.DS_Store
+Thumbs.db

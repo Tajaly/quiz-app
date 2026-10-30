@@ -1,0 +1,11 @@
+# Optional local Azure Cosmos DB emulator (Linux "vNext" preview image).
+# Start with `docker compose up -d`, then run the server with the variables from `.env.example`.
+services:
+  cosmos:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview
+    ports:
+      - '8081:8081' # Cosmos DB endpoint (HTTP)
+      - '1234:1234' # Data Explorer UI
+    environment:
+      PROTOCOL: http
+      ENABLE_EXPLORER: 'true'

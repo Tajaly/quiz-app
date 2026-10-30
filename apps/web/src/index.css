@@ -1,0 +1,269 @@
+@import 'tailwindcss';
+@import '@fontsource/press-start-2p/400.css';
+@import '@fontsource/pixelify-sans/400.css';
+@import '@fontsource/pixelify-sans/600.css';
+@import '@fontsource/pixelify-sans/700.css';
+
+@theme {
+  --font-pixel: 'Press Start 2P', ui-monospace, monospace;
+  --font-sans: 'Pixelify Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #120a24;
+  --color-night-950: #0d0820;
+  --color-night-900: #160e30;
+  --color-night-800: #21164a;
+  --color-night-700: #2e1f63;
+  --color-night-600: #3f2c84;
+  --color-night-500: #5a45ad;
+  --color-mist: #c9bfee;
+  --color-sun: #ffc93c;
+  --color-sun-dark: #d98e04;
+  --color-lime: #63c74d;
+  --color-lime-dark: #2d8a3e;
+  --color-flame: #e43b44;
+  --color-flame-dark: #a22633;
+  --color-sky: #2ce8f5;
+  --color-sky-dark: #0b6bcb;
+  --color-bubblegum: #ff6fb5;
+
+  --animate-bob: pq-bob 0.6s steps(2) infinite;
+  --animate-blink: pq-blink 1s steps(1) infinite;
+  --animate-pop: pq-pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  --animate-rise: pq-rise 0.7s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+  --animate-shake: pq-shake 0.4s steps(4) both;
+  --animate-float-up: pq-float-up 1.6s ease-out both;
+  --animate-drive: pq-drive 6s linear infinite;
+  --animate-road: pq-road 0.5s linear infinite;
+  --animate-spin-steps: pq-spin 0.8s steps(8) infinite;
+}
+
+@keyframes pq-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes pq-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes pq-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pq-rise {
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pq-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes pq-float-up {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-28px);
+    opacity: 0;
+  }
+}
+
+@keyframes pq-drive {
+  0% {
+    transform: translateX(-160px);
+  }
+  100% {
+    transform: translateX(calc(100vw + 40px));
+  }
+}
+
+@keyframes pq-road {
+  0% {
+    background-position-x: 0;
+  }
+  100% {
+    background-position-x: -64px;
+  }
+}
+
+@keyframes pq-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pq-confetti {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(var(--drift, 0px), 110vh, 0) rotate(720deg);
+  }
+}
+
+@keyframes pq-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px var(--color-ink),
+      0 0 24px 6px rgb(255 201 60 / 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px var(--color-ink),
+      0 0 40px 12px rgb(255 201 60 / 0.85);
+  }
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    color: white;
+    font-family: var(--font-sans);
+    background-color: var(--color-night-900);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgb(90 69 173 / 0.45), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgb(255 111 181 / 0.18), transparent 45%),
+      linear-gradient(rgb(255 255 255 / 0.035) 2px, transparent 2px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.035) 2px, transparent 2px);
+    background-size:
+      100% 100%,
+      100% 100%,
+      32px 32px,
+      32px 32px;
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-sun);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 4px solid var(--color-sky);
+    outline-offset: 3px;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Chunky pixel frame with notched corners, drawn with four hard shadows. */
+  .px-frame {
+    --px: 4px;
+    --px-color: var(--color-ink);
+    box-shadow:
+      0 calc(var(--px) * -1) 0 0 var(--px-color),
+      0 var(--px) 0 0 var(--px-color),
+      calc(var(--px) * -1) 0 0 0 var(--px-color),
+      var(--px) 0 0 0 var(--px-color);
+  }
+
+  .px-frame-raised {
+    --px: 4px;
+    --px-color: var(--color-ink);
+    box-shadow:
+      0 calc(var(--px) * -1) 0 0 var(--px-color),
+      0 var(--px) 0 0 var(--px-color),
+      calc(var(--px) * -1) 0 0 0 var(--px-color),
+      var(--px) 0 0 0 var(--px-color),
+      0 calc(var(--px) * 3) 0 0 rgb(0 0 0 / 0.35),
+      inset 0 calc(var(--px) * -1.5) 0 0 rgb(0 0 0 / 0.25),
+      inset 0 var(--px) 0 0 rgb(255 255 255 / 0.25);
+  }
+
+  .px-text-outline {
+    text-shadow:
+      3px 0 0 var(--color-ink),
+      -3px 0 0 var(--color-ink),
+      0 3px 0 var(--color-ink),
+      0 -3px 0 var(--color-ink),
+      3px 3px 0 var(--color-ink),
+      -3px -3px 0 var(--color-ink),
+      3px -3px 0 var(--color-ink),
+      -3px 3px 0 var(--color-ink),
+      0 7px 0 rgb(0 0 0 / 0.35);
+  }
+
+  .px-checkered {
+    background-color: white;
+    background-image:
+      linear-gradient(45deg, var(--color-ink) 25%, transparent 25%, transparent 75%, var(--color-ink) 75%),
+      linear-gradient(45deg, var(--color-ink) 25%, transparent 25%, transparent 75%, var(--color-ink) 75%);
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      8px 8px;
+    image-rendering: pixelated;
+  }
+
+  .px-road {
+    background-color: #3a3550;
+    background-image: linear-gradient(90deg, #f4f4f8 0 32px, transparent 32px 64px);
+    background-size: 64px 4px;
+    background-repeat: repeat-x;
+    background-position: 0 50%;
+  }
+
+  .px-glow {
+    animation: pq-glow 1.2s ease-in-out infinite;
+  }
+
+  .pixelated {
+    image-rendering: pixelated;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

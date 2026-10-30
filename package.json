@@ -1,0 +1,41 @@
+{
+  "name": "power-quiz",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Live pixel-kart quiz races: leads run quizzes on a big screen, players join from their phones.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c blue,magenta \"npm run dev -w @power-quiz/server\" \"npm run dev -w @power-quiz/web\"",
+    "dev:lan": "concurrently -k -n server,web -c blue,magenta \"npm run dev -w @power-quiz/server\" \"npm run dev -w @power-quiz/web -- --host\"",
+    "build": "npm run build -w @power-quiz/web && npm run build -w @power-quiz/server && node scripts/package-deploy.mjs",
+    "start": "node --env-file-if-exists=.env .deploy/server.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
