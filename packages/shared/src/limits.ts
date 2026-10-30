@@ -10,7 +10,7 @@ export const LIMITS = {
   nicknameMax: 20,
   timeLimitMinSec: 5,
   timeLimitMaxSec: 120,
-  playersPerSessionMax: 250,
+  playersPerSessionMax: 400,
 } as const;
 
 export const DEFAULT_TIME_LIMIT_SEC = 20;

@@ -22,6 +22,9 @@
     },
     "entraTenantId": {
       "value": "${ENTRA_TENANT_ID}"
+    },
+    "appServicePlanSku": {
+      "value": "${APP_SERVICE_PLAN_SKU}"
     }
   }
 }

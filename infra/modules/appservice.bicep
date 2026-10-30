@@ -10,7 +10,7 @@ param planName string
 @description('Name of the web app.')
 param appName string
 
-@description('SKU of the App Service plan, e.g. B1.')
+@description('SKU of the App Service plan, e.g. P0v3.')
 param skuName string
 
 @description('App settings (environment variables) for the server.')

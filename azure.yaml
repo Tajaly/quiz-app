@@ -17,6 +17,7 @@ pipeline:
     - AUTH_MODE
     - ENTRA_CLIENT_ID
     - ENTRA_TENANT_ID
+    - APP_SERVICE_PLAN_SKU
 
 hooks:
   # Guest hosting skips these Entra setup hooks; AUTH_MODE=entra opts in.

@@ -112,6 +112,7 @@ shows an error rather than silently creating a temporary workspace.
 | `npm run lint`      | ESLint                                                                        |
 | `npm run typecheck` | TypeScript checks for all workspaces                                          |
 | `npm run format`    | Prettier                                                                      |
+| `npm run load-test` | Simulates a race with many phones ([Capacity and cost](#capacity-and-cost))   |
 
 The Cosmos DB repository tests run only when `COSMOS_TEST_ENDPOINT` is set, e.g. against the emulator:
 `COSMOS_TEST_ENDPOINT=http://localhost:8081 npx vitest run --project server test/cosmos.test.ts`.
@@ -160,7 +161,7 @@ All settings are environment variables (validated at startup):
   React SPA ──────────┐               ┌─── React SPA (MSAL only in Entra mode)
                       │  HTTPS + WSS  │   (REST /api + Socket.IO, bearer token)
                       ▼               ▼
-        Azure App Service (Linux, Node.js 24, single instance)
+        Azure App Service (Linux P0v3, Node.js 24, single instance)
           Express 5  – REST API: quizzes, sessions, results, CSV, runtime config
           Socket.IO  – realtime gateway → game engine (in-memory state machine + timers)
           Static hosting of the SPA build (same origin, no CORS)
@@ -174,8 +175,9 @@ All settings are environment variables (validated at startup):
   answers and never sends the correct answer to anyone before a question closes.
 - Clients receive full **view snapshots** (`host:view`, `player:view`) after every change, so a reconnect simply
   restores the current state. Bursts of changes are coalesced into one update.
-- Live game state is kept **in memory** (fine for ~200 players per race on one instance). Results are written
-  to Cosmos DB after each question and at the end. A restart or redeploy during a live race ends that race.
+- Live game state is kept **in memory**: one P0v3 instance runs races of up to 400 players (see
+  [Capacity and cost](#capacity-and-cost)). Results are written to Cosmos DB after each question and at the
+  end. A restart or redeploy during a live race ends that race.
 
 ```
 apps/web          React 19 + Vite SPA: phone flow, big screen, quiz editor, results
@@ -202,7 +204,7 @@ e2e/              Playwright end-to-end tests
 azd up   # asks for an environment name, subscription and region (e.g. germanywestcentral)
 ```
 
-`azd up` provisions `rg-<env>`: App Service (Linux, B1), serverless Cosmos DB, Log Analytics and Application
+`azd up` provisions `rg-<env>`: App Service (Linux, P0v3), serverless Cosmos DB, Log Analytics and Application
 Insights, then builds the app (`npm run build` → `.deploy/`) and deploys it. Guest hosting is the default:
 there is **no Entra app registration, redirect URI or Microsoft host sign-in to configure**.
 Afterwards use `azd deploy` (code only) or `azd provision` (infrastructure only). Your user gets Cosmos DB
@@ -211,6 +213,35 @@ against Azure.
 
 To switch an existing Entra deployment to guest hosting, run `azd env set AUTH_MODE guest` followed by
 `azd up`, so both the App Service settings and application code are updated.
+
+### Capacity and cost
+
+A race holds up to **400 players**, which leaves room for 300 racers plus phones that join a second time.
+Every phone keeps a WebSocket open, so the default plan is **P0v3** (1 vCPU, 4 GB RAM): Premium plans have no
+WebSocket connection limit, whereas Basic plans (B1–B3) allow at most 350 concurrent WebSockets per instance.
+
+A month of the P0v3 plan costs about **€57** (pay-as-you-go list price in Sweden Central and Germany West
+Central, October 2026). Serverless Cosmos DB and the logs add only cents for typical use. `azd down` deletes
+everything when the event is over. For small groups, choose a cheaper plan before provisioning:
+
+```sh
+azd env set APP_SERVICE_PLAN_SKU B1   # about €12/month, at most 350 concurrent WebSockets
+azd provision
+```
+
+If provisioning fails with `SubscriptionIsOverQuotaForSku` (for example `Current Limit (P0v3 VMs): 0`), the
+subscription has no App Service quota for that plan in the region. Request a quota increase, or move to a region
+with quota: run `azd down`, then `azd env set AZURE_LOCATION swedencentral` and `azd up`.
+
+Before an event, simulate a full race against the deployment:
+
+```sh
+npm run load-test -- https://<app>.azurewebsites.net --players 300
+```
+
+It connects the given number of simulated phones, answers every question, checks the saved results and then
+deletes its quiz and results again. Run it before, not during, a real race, and avoid deployments (`azd deploy`,
+or merges to `main` with CI/CD) while a race is live: a restart ends live races.
 
 ### Optional Microsoft Entra ID sign-in
 
@@ -246,8 +277,10 @@ azd pipeline config   # optionally: --principal-role Contributor (no other role 
 
 This creates a federated (OIDC) service principal and sets the repository variables `AZURE_CLIENT_ID`,
 `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_ENV_NAME` and `AZURE_LOCATION`. The deploy workflow defaults
-to guest hosting and needs no `ENTRA_*` variables. For an Entra deployment, also set the repository variables
-`AUTH_MODE=entra`, `ENTRA_CLIENT_ID` and `ENTRA_TENANT_ID` (exported by `azd pipeline config` when configured).
+to guest hosting and needs no `ENTRA_*` variables. It provisions the P0v3 plan unless the repository variable
+`APP_SERVICE_PLAN_SKU` (copied from your azd environment when set) names another one. For an Entra deployment,
+also set the repository variables `AUTH_MODE=entra`, `ENTRA_CLIENT_ID` and `ENTRA_TENANT_ID` (exported by
+`azd pipeline config` when configured).
 CI never creates or changes an Entra ID app registration.
 
 ## Security & privacy

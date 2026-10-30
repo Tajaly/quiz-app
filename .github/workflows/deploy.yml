@@ -34,6 +34,8 @@ jobs:
       AUTH_MODE: ${{ vars.AUTH_MODE || 'guest' }}
       ENTRA_CLIENT_ID: ${{ vars.ENTRA_CLIENT_ID }}
       ENTRA_TENANT_ID: ${{ vars.ENTRA_TENANT_ID }}
+      # azd passes empty (but set) variables to Bicep, so fall back to the template default explicitly.
+      APP_SERVICE_PLAN_SKU: ${{ vars.APP_SERVICE_PLAN_SKU || 'P0v3' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
