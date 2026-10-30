@@ -2,6 +2,8 @@
 //   npm run load-test -- https://<app>.azurewebsites.net --players 300
 // It uses a throwaway guest host key and deletes its quiz and race results afterwards. Run it before,
 // not during, a real race: it shares the server (and its single CPU) with the live races.
+// This machine receives the updates of every simulated phone (each join updates the racer count on all
+// phones), so on a slow connection it, not the server, limits how fast racers can join.
 import { randomBytes } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { parseArgs } from 'node:util';
@@ -17,7 +19,7 @@ const { values, positionals } = parseArgs({
   options: {
     players: { type: 'string', default: '300' },
     questions: { type: 'string', default: '5' },
-    'join-concurrency': { type: 'string', default: '50' },
+    'join-concurrency': { type: 'string', default: '10' },
     'answer-spread': { type: 'string', default: '4000' },
   },
 });
@@ -291,6 +293,12 @@ console.log(`Finished in ${seconds(performance.now() - started)}; test quiz and 
 if (failures.length > 0) {
   console.error(`FAIL – ${failures.length} problem(s):`);
   for (const failure of failures.slice(0, 20)) console.error(`  - ${failure}`);
+  if (failures.some((failure) => / could not join| was disconnected/.test(failure))) {
+    console.error(
+      'Hint: this machine receives the updates of every simulated phone. On a slow connection racers drop ' +
+        'while joining: retry with a lower --join-concurrency (e.g. 3) or from a faster network.',
+    );
+  }
   process.exitCode = 1;
 } else {
   console.log('PASS');

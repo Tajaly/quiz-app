@@ -219,6 +219,8 @@ To switch an existing Entra deployment to guest hosting, run `azd env set AUTH_M
 A race holds up to **400 players**, which leaves room for 300 racers plus phones that join a second time.
 Every phone keeps a WebSocket open, so the default plan is **P0v3** (1 vCPU, 4 GB RAM): Premium plans have no
 WebSocket connection limit, whereas Basic plans (B1–B3) allow at most 350 concurrent WebSockets per instance.
+On P0v3, simulated 300- and 400-player races counted every answer, delivered each question to all phones within
+0.2 s and kept the CPU below 25%.
 
 A month of the P0v3 plan costs about **€57** (pay-as-you-go list price in Sweden Central and Germany West
 Central, October 2026). Serverless Cosmos DB and the logs add only cents for typical use. `azd down` deletes
@@ -240,8 +242,10 @@ npm run load-test -- https://<app>.azurewebsites.net --players 300
 ```
 
 It connects the given number of simulated phones, answers every question, checks the saved results and then
-deletes its quiz and results again. Run it before, not during, a real race, and avoid deployments (`azd deploy`,
-or merges to `main` with CI/CD) while a race is live: a restart ends live races.
+deletes its quiz and results again. Your machine receives the updates of every simulated phone, so on a slow
+connection racers may drop while joining; lower `--join-concurrency` (default 10, e.g. `3`) in that case. Run
+it before, not during, a real race, and avoid deployments (`azd deploy`, or merges to `main` with CI/CD) while a
+race is live: a restart ends live races.
 
 ### Optional Microsoft Entra ID sign-in
 
