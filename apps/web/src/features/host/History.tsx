@@ -22,7 +22,7 @@ export function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Heading className="text-xl sm:text-2xl">Past races</Heading>
+      <Heading className="text-4xl sm:text-5xl">Past races</Heading>
       <p className="text-mist">Results are kept for 90 days. Download them as CSV to keep them longer.</p>
       {error && <Notice tone="error">{error}</Notice>}
       {history.isPending ? (
@@ -34,7 +34,7 @@ export function HistoryPage() {
       ) : (
         <Panel className="overflow-x-auto p-0 sm:p-0">
           <table className="w-full min-w-[720px] text-left">
-            <thead className="font-pixel text-[10px] uppercase text-mist">
+            <thead className="bg-surface text-xs font-bold uppercase text-mist">
               <tr>
                 <th className="p-4">Date</th>
                 <th className="p-4">Quiz</th>
@@ -46,10 +46,10 @@ export function HistoryPage() {
             </thead>
             <tbody>
               {history.data.map((race) => (
-                <tr key={race.id} className="border-t-4 border-ink/60">
+                <tr key={race.id} className="border-t border-border">
                   <td className="p-4 whitespace-nowrap">{formatDateTime(race.startedAt)}</td>
                   <td className="p-4 font-bold">
-                    <Link to={`/host/history/${race.id}`} className="hover:text-sun hover:underline">
+                    <Link to={`/host/history/${race.id}`} className="hover:text-sky hover:underline">
                       {race.quizTitle}
                     </Link>
                   </td>

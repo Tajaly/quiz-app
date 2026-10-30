@@ -1,7 +1,11 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createDevAuthenticator, createEntraAuthenticator } from './auth/authenticator';
+import {
+  createDevAuthenticator,
+  createEntraAuthenticator,
+  createGuestAuthenticator,
+} from './auth/authenticator';
 import { loadConfig } from './config';
 import { createLogger } from './logger';
 import { createCosmosRepositories } from './repositories/cosmos';
@@ -23,7 +27,12 @@ const repos = config.cosmos ? await createCosmosRepositories(config.cosmos) : cr
 if (!config.cosmos)
   logger.warn('COSMOS_ENDPOINT is not set: using in-memory storage (data is lost on restart).');
 
-const auth = config.auth.mode === 'entra' ? createEntraAuthenticator(config.auth) : createDevAuthenticator();
+const auth =
+  config.auth.mode === 'entra'
+    ? createEntraAuthenticator(config.auth)
+    : config.auth.mode === 'guest'
+      ? createGuestAuthenticator()
+      : createDevAuthenticator();
 if (auth.mode === 'dev')
   logger.warn('Using DEV sign-in without real authentication. Never use this in production.');
 

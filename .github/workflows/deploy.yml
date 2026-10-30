@@ -31,6 +31,7 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AUTH_MODE: ${{ vars.AUTH_MODE || 'guest' }}
       ENTRA_CLIENT_ID: ${{ vars.ENTRA_CLIENT_ID }}
       ENTRA_TENANT_ID: ${{ vars.ENTRA_TENANT_ID }}
     steps:

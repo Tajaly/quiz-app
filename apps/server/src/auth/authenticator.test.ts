@@ -1,6 +1,13 @@
+import { randomBytes } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTVerifyGetKey } from 'jose';
-import { AuthError, bearerToken, createDevAuthenticator, createEntraAuthenticator } from './authenticator';
+import {
+  AuthError,
+  bearerToken,
+  createDevAuthenticator,
+  createEntraAuthenticator,
+  createGuestAuthenticator,
+} from './authenticator';
 
 const tenantId = '11111111-1111-1111-1111-111111111111';
 const clientId = '22222222-2222-2222-2222-222222222222';
@@ -70,6 +77,41 @@ describe('Entra authenticator', () => {
 
   it('rejects garbage', async () => {
     await expect(auth().verify('not-a-jwt')).rejects.toBeInstanceOf(AuthError);
+  });
+});
+
+describe('Guest authenticator', () => {
+  const guestToken = () => `guest:${randomBytes(32).toString('hex')}`;
+
+  it('derives a stable owner across server restarts without storing the secret', async () => {
+    const key = guestToken();
+    const user = await createGuestAuthenticator().verify(key);
+    expect(user).toMatchObject({ name: 'Guest host', id: expect.stringMatching(/^guest-[\w-]{43}$/) });
+    expect(user.id).not.toContain(key.slice('guest:'.length));
+    expect(await createGuestAuthenticator().verify(key)).toEqual(user);
+  });
+
+  it('keeps different browser keys isolated', async () => {
+    const auth = createGuestAuthenticator();
+    expect((await auth.verify(guestToken())).id).not.toBe((await auth.verify(guestToken())).id);
+  });
+
+  it.each([
+    '',
+    'dev:Alice',
+    '123456',
+    'guest:123456',
+    `guest:${'a'.repeat(63)}`,
+    `guest:${'g'.repeat(64)}`,
+    `guest:${'a'.repeat(64)}\n`,
+  ])('rejects malformed keys: %s', async (key) => {
+    await expect(createGuestAuthenticator().verify(key)).rejects.toBeInstanceOf(AuthError);
+  });
+
+  it('does not accept a public owner ID as its credential', async () => {
+    const auth = createGuestAuthenticator();
+    const user = await auth.verify(guestToken());
+    await expect(auth.verify(user.id)).rejects.toBeInstanceOf(AuthError);
   });
 });
 

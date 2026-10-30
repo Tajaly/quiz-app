@@ -6,18 +6,25 @@ import { createSocket, emitAck, type QuizSocket, type Timed } from '../../../lib
 export type HostConnection = 'connecting' | 'online' | 'offline' | 'denied';
 
 export function useHostSession(sessionId: string) {
-  const { getToken } = useAuth();
+  const { getToken, mode } = useAuth();
   const [timed, setTimed] = useState<Timed<HostView> | null>(null);
   const [connection, setConnection] = useState<HostConnection>('connecting');
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<QuizSocket | null>(null);
 
   useEffect(() => {
-    // A fresh access token is fetched for every (re)connection attempt.
+    let credentialError: string | null = null;
     const socket = createSocket((callback) => {
       getToken().then(
-        (token) => callback({ role: 'host', token }),
-        () => callback({ role: 'host', token: '' }),
+        (token) => {
+          credentialError = null;
+          callback({ role: 'host', token });
+        },
+        (tokenError: unknown) => {
+          credentialError =
+            tokenError instanceof Error ? tokenError.message : 'Could not load your host key.';
+          callback({ role: 'host', token: '' });
+        },
       );
     });
     socketRef.current = socket;
@@ -34,7 +41,12 @@ export function useHostSession(sessionId: string) {
     socket.on('connect_error', (connectError) => {
       if (connectError.message === 'UNAUTHORIZED') {
         setConnection('denied');
-        setError('Your sign-in has expired. Reload the page to sign in again.');
+        setError(
+          credentialError ??
+            (mode === 'guest'
+              ? 'Your host key is not valid. Open this race in the browser that created it.'
+              : 'Your sign-in has expired. Reload the page to sign in again.'),
+        );
       } else {
         setConnection('offline');
       }
@@ -47,7 +59,7 @@ export function useHostSession(sessionId: string) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [sessionId, getToken]);
+  }, [sessionId, getToken, mode]);
 
   const command = useCallback(async (event: keyof ClientToServerEvents, payload?: unknown) => {
     const socket = socketRef.current;

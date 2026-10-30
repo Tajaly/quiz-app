@@ -82,8 +82,8 @@ function TopButton({
       aria-pressed={pressed}
       title={label}
       className={cx(
-        'p-2 transition-colors hover:bg-white/10',
-        pressed ? 'text-sun' : 'text-mist hover:text-white',
+        'flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 transition-colors hover:bg-sky-soft',
+        pressed ? 'bg-sun-soft text-sun-dark' : 'text-mist hover:text-sky',
       )}
     >
       <Icon name={icon} size={2.2} />
@@ -221,13 +221,13 @@ function LiveScreen({ sessionId }: { sessionId: string }) {
   const timed = host.timed;
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b-4 border-ink bg-night-950/85 px-4 py-2">
+    <div className="flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden">
+      <header className="race-header flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
         <Logo size="sm" />
         <span className="min-w-0 flex-1 truncate text-lg font-bold">{view.quizTitle}</span>
         {view.phase !== 'lobby' && view.phase !== 'ended' && (
           <span className="font-pixel text-[10px] text-mist">
-            {window.location.host}/join · PIN <span className="text-sun">{formatPin(view.pin)}</span>
+            {window.location.host}/join · PIN <span className="text-sky-dark">{formatPin(view.pin)}</span>
           </span>
         )}
         <span className="flex items-center gap-2 font-pixel text-xs" title="Racers">
@@ -258,12 +258,15 @@ function LiveScreen({ sessionId }: { sessionId: string }) {
       </header>
 
       {host.connection === 'offline' && (
-        <p role="status" className="bg-flame px-4 py-1 text-center font-bold">
+        <p role="status" className="bg-flame-soft px-4 py-2 text-center font-bold text-flame-dark">
           Connection lost – reconnecting… The race keeps running on the server.
         </p>
       )}
       {host.error && host.connection !== 'denied' && (
-        <div role="alert" className="flex items-center justify-center gap-4 bg-flame px-4 py-1 font-bold">
+        <div
+          role="alert"
+          className="flex items-center justify-center gap-4 bg-flame-soft px-4 py-2 font-bold text-flame-dark"
+        >
           <span>{host.error}</span>
           <button type="button" onClick={host.clearError} className="underline">
             Dismiss
@@ -271,7 +274,7 @@ function LiveScreen({ sessionId }: { sessionId: string }) {
         </div>
       )}
 
-      <main className="relative min-h-0 flex-1 p-4 xl:p-6">
+      <main className="live-main relative min-h-0 flex-1 p-4 xl:p-6">
         {view.phase === 'lobby' && <LobbyStage view={view} onKick={kick} />}
         {view.phase === 'countdown' && <CountdownStage timed={timed} />}
         {view.phase === 'question' && <QuestionStage timed={timed} />}
@@ -292,7 +295,7 @@ function LiveScreen({ sessionId }: { sessionId: string }) {
         )}
       </main>
 
-      <footer className="flex flex-wrap items-center gap-3 border-t-4 border-ink bg-night-950/85 px-4 py-2">
+      <footer className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-border bg-panel px-4 py-3">
         <p className="hidden text-sm text-mist lg:block">
           Space: next · E: end question · L: lock · M: mute · F: fullscreen
         </p>

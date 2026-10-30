@@ -34,7 +34,7 @@ const STATUS_BY_CODE: Partial<Record<ErrorCode, number>> = {
 };
 
 export function clientConfig(config: AppConfig): ClientConfig {
-  if (config.auth.mode === 'dev') return { authMode: 'dev', entra: null };
+  if (config.auth.mode !== 'entra') return { authMode: config.auth.mode, entra: null };
   return {
     authMode: 'entra',
     entra: {

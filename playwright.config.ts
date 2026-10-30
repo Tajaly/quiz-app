@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const port = Number(process.env.E2E_PORT ?? 3999);
 
-// Runs against the production bundle (`npm run build` first) with dev sign-in.
+// Runs against the production bundle (`npm run build` first) with real guest-host access.
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: false,
@@ -20,12 +20,16 @@ export default defineConfig({
   webServer: {
     command: 'node .deploy/server.mjs',
     url: `http://localhost:${port}/healthz`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 60_000,
     env: {
       PORT: String(port),
-      NODE_ENV: 'test',
-      AUTH_MODE: 'dev',
+      NODE_ENV: 'production',
+      AUTH_MODE: 'guest',
+      ENTRA_CLIENT_ID: '',
+      ENTRA_TENANT_ID: '',
+      COSMOS_ENDPOINT: '',
+      COSMOS_KEY: '',
       LOG_LEVEL: 'warn',
       STATIC_DIR: '.deploy/public',
     },

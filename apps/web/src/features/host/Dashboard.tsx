@@ -36,9 +36,9 @@ function LiveRaces() {
         {live.data.map((race) => (
           <li
             key={race.sessionId}
-            className="px-frame m-1 flex flex-wrap items-center gap-3 bg-night-700 px-4 py-3"
+            className="flex flex-wrap items-center gap-3 rounded-xl bg-sky-soft px-4 py-3"
           >
-            <span className="h-3 w-3 animate-blink bg-lime" aria-hidden />
+            <span className="h-3 w-3 animate-blink rounded-full bg-leaf" aria-hidden />
             <span className="flex-1 text-lg font-bold">{race.quizTitle}</span>
             <Badge>PIN {formatPin(race.pin)}</Badge>
             <Badge>{race.playerCount} racers</Badge>
@@ -69,9 +69,9 @@ function QuizCard({ quiz }: { quiz: QuizSummary }) {
   };
 
   return (
-    <li className="px-frame m-1 flex flex-col gap-3 bg-night-800 p-4">
+    <li className="game-panel flex flex-col gap-4 p-5">
       <div className="flex items-start gap-3">
-        <Icon name="flag" size={3} className="mt-1 shrink-0 text-sun" />
+        <Icon name="flag" size={2.5} className="mt-1 shrink-0 text-sky" />
         <div className="min-w-0 flex-1">
           <h3 className="break-words text-xl font-bold leading-tight">{quiz.title}</h3>
           {quiz.description && <p className="mt-1 line-clamp-2 text-mist">{quiz.description}</p>}
@@ -134,7 +134,7 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Heading className="text-xl sm:text-2xl">Your quizzes</Heading>
+        <Heading className="text-4xl sm:text-5xl">Your quizzes</Heading>
         <div className="flex flex-wrap gap-1">
           <Button
             variant="secondary"
@@ -159,7 +159,7 @@ export function Dashboard() {
       ) : quizzes.data.length === 0 ? (
         <Panel className="flex flex-col items-center gap-4 py-10 text-center">
           <Kart kart={{ model: 'classic', color: 'yellow' }} scale={6} className="animate-bob" />
-          <p className="font-pixel text-sm text-sun">The garage is empty</p>
+          <p className="font-display text-3xl font-bold text-sky-dark">The garage is empty</p>
           <p className="max-w-md text-lg text-mist">
             Create your first quiz, or add the sample quiz to take Power Quiz for a test drive.
           </p>

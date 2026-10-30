@@ -9,6 +9,11 @@ export const idSchema = z
   .max(64)
   .regex(/^[A-Za-z0-9_-]+$/, 'Invalid id');
 
+export const guestHostTokenSchema = z
+  .string()
+  .length(70, 'Invalid guest host key')
+  .regex(/^guest:[a-f0-9]{64}$/, 'Invalid guest host key');
+
 export const kartSchema = z.object({
   model: z.enum(KART_MODELS),
   color: z.enum(KART_COLORS),

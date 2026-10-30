@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import type { RequestHandler, Response } from 'express';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyGetKey } from 'jose';
-import type { UserInfo } from '@power-quiz/shared';
+import { guestHostTokenSchema, type ClientConfig, type UserInfo } from '@power-quiz/shared';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -19,8 +20,20 @@ export class AuthError extends Error {
 }
 
 export interface Authenticator {
-  readonly mode: 'entra' | 'dev';
+  readonly mode: ClientConfig['authMode'];
   verify(token: string): Promise<UserInfo>;
+}
+
+export function createGuestAuthenticator(): Authenticator {
+  return {
+    mode: 'guest',
+    async verify(token) {
+      if (!guestHostTokenSchema.safeParse(token).success) throw new AuthError('Invalid guest host key');
+      // Only the hash is stored as the owner ID; knowing it must not reveal the browser's bearer key.
+      const ownerId = createHash('sha256').update(token).digest('base64url');
+      return { id: `guest-${ownerId}`, name: 'Guest host' };
+    },
+  };
 }
 
 export interface EntraAuthOptions {
@@ -104,13 +117,20 @@ export function requireAuth(auth: Authenticator): RequestHandler {
   return async (req, res, next) => {
     const token = bearerToken(req.headers.authorization);
     if (!token) {
-      res.status(401).json({ error: 'Please sign in.' });
+      res.status(401).json({
+        error: auth.mode === 'guest' ? 'Open the host page to use your private host key.' : 'Please sign in.',
+      });
       return;
     }
     try {
       res.locals.user = await auth.verify(token);
     } catch {
-      res.status(401).json({ error: 'Your sign-in has expired. Please sign in again.' });
+      res.status(401).json({
+        error:
+          auth.mode === 'guest'
+            ? 'Your host key is not valid. Use the browser that created this quiz.'
+            : 'Your sign-in has expired. Please sign in again.',
+      });
       return;
     }
     next();

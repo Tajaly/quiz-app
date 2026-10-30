@@ -3,6 +3,7 @@ import { KART_COLORS, KART_MODELS } from '@power-quiz/shared';
 import { ICONS } from './icons';
 import { KART_ART, kartPalette } from './kartArt';
 import { spriteRuns } from './PixelSprite';
+import { REFEREE_ART, REFEREE_PALETTE } from './refereeArt';
 
 describe('sprite art', () => {
   it('defines a 24×15 sprite for every kart model', () => {
@@ -29,6 +30,42 @@ describe('sprite art', () => {
       expect(rows, name).toHaveLength(10);
       for (const row of rows) expect(row, `${name}: "${row}"`).toMatch(/^[.x]{10}$/);
     }
+  });
+
+  it.each([
+    ['body', 16, 20],
+    ['eyes', 8, 2],
+    ['tail', 5, 6],
+    ['flag', 18, 12],
+  ] as const)('keeps the referee %s layer on its pixel grid', (part, width, height) => {
+    const rows = REFEREE_ART[part];
+    expect(rows).toHaveLength(height);
+    for (const row of rows) {
+      expect(row).toHaveLength(width);
+      for (const key of row) {
+        if (key !== '.') expect(Object.hasOwn(REFEREE_PALETTE, key)).toBe(true);
+      }
+    }
+    expect(spriteRuns(rows, REFEREE_PALETTE).length).toBeGreaterThan(0);
+  });
+
+  it('draws a black-and-white chequered finish flag rather than stripes', () => {
+    REFEREE_ART.flag.forEach((row, y) => {
+      [...row].forEach((key, x) => {
+        expect(key).toBe((Math.floor(x / 3) + Math.floor(y / 3)) % 2 === 0 ? 'k' : 'h');
+      });
+    });
+  });
+
+  it('keeps the dog’s signature markings with just five flat colours', () => {
+    const head = REFEREE_ART.body.slice(0, 12).join('');
+    const tie = REFEREE_ART.body.slice(12, 16).join('');
+    expect(head).toContain('kkkk');
+    expect(head).toContain('wwww');
+    expect(tie).toContain('rh');
+    expect(tie).toContain('hr');
+    expect(new Set(Object.values(REFEREE_PALETTE)).size).toBe(5);
+    expect(REFEREE_PALETTE.r).toBe('#cf4759');
   });
 });
 

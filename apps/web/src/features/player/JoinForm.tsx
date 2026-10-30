@@ -17,7 +17,7 @@ import { Spinner } from '../../design/Widgets';
 import { MessageScreen } from '../landing/NotFound';
 import { KartGarage } from './KartGarage';
 
-const linkClass = 'font-pixel text-xs text-sky underline underline-offset-4 hover:text-white';
+const linkClass = 'font-semibold text-sky underline underline-offset-4 hover:text-sky-dark';
 
 export function JoinForm({
   pin,
@@ -105,7 +105,7 @@ export function JoinForm({
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-3 py-6">
       <div className="text-center">
         <p className="font-pixel text-[10px] text-mist">RACE PIN {pin}</p>
-        <Heading className="mt-3 text-lg">{race.quizTitle}</Heading>
+        <Heading className="mt-3 text-3xl">{race.quizTitle}</Heading>
       </div>
       <Panel>
         <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
@@ -128,7 +128,7 @@ export function JoinForm({
           <Button type="submit" size="lg" icon="flag" disabled={busy}>
             {busy ? 'Joining…' : 'Join the race'}
           </Button>
-          <p className="text-xs text-mist/80">
+          <p className="text-xs leading-relaxed text-mist">
             Your nickname, kart and answers appear on the host’s big screen and are kept with the race results
             for up to 90 days.
           </p>

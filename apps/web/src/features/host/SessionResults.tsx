@@ -38,14 +38,16 @@ function QuestionBreakdown({ detail, index }: { detail: SessionDetail; index: nu
                 <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center', style.className)}>
                   <Icon name={style.icon} size={1.8} />
                 </span>
-                <div className="relative h-9 flex-1 bg-night-950">
+                <div className="relative min-h-9 min-w-0 flex-1 overflow-hidden rounded-lg bg-surface">
                   <div
                     className="absolute inset-y-0 left-0"
                     style={{ width: `${share}%`, backgroundColor: style.barColor }}
                   />
-                  <span className="relative z-10 flex h-full items-center gap-2 px-3 font-bold drop-shadow-[0_2px_0_rgb(18_10_36)]">
+                  <span className="relative z-10 flex min-h-9 items-center gap-2 break-words px-3 py-1 font-bold text-ink">
                     {option.text}{' '}
-                    {correct && <Icon name="check" size={1.6} className="text-lime" title="Correct" />}
+                    {correct && (
+                      <Icon name="check" size={1.6} className="shrink-0 text-leaf" title="Correct" />
+                    )}
                   </span>
                 </div>
                 <span className="w-24 text-right tabular-nums">
@@ -64,9 +66,9 @@ function QuestionBreakdown({ detail, index }: { detail: SessionDetail; index: nu
           {(answers?.answers ?? []).map((answer) => (
             <li
               key={answer.playerId}
-              className={cx('px-frame m-1 bg-night-950 p-3', answer.hidden && 'opacity-60')}
+              className={cx('rounded-xl bg-surface p-3', answer.hidden && 'text-mist')}
             >
-              <p className="text-sm font-bold text-sun">{answer.nickname}</p>
+              <p className="text-sm font-bold text-sky-dark">{answer.nickname}</p>
               <p className="break-words">{answer.text}</p>
               {answer.hidden && <p className="text-xs text-mist">Hidden on the big screen</p>}
             </li>
@@ -93,12 +95,12 @@ export function SessionResultsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link to="/host/history" className="inline-flex items-center gap-2 text-mist hover:text-white">
+      <Link to="/host/history" className="inline-flex items-center gap-2 text-mist hover:text-sky">
         <Icon name="back" size={1.6} /> Past races
       </Link>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Heading className="text-lg sm:text-2xl">{session.quizTitle}</Heading>
+          <Heading className="text-3xl sm:text-4xl">{session.quizTitle}</Heading>
           <div className="mt-3 flex flex-wrap gap-1">
             <Badge>{formatDateTime(session.startedAt)}</Badge>
             <Badge>{session.players.length} racers</Badge>
@@ -147,22 +149,24 @@ export function SessionResultsPage() {
               <li
                 key={player.playerId}
                 className={cx(
-                  'px-frame m-1 flex items-center gap-3 px-3 py-2',
-                  player.rank === 1 ? 'bg-sun text-ink' : player.rank <= 3 ? 'bg-night-600' : 'bg-night-950',
+                  'flex items-center gap-2 rounded-xl px-3 py-3 sm:gap-3',
+                  player.rank === 1 ? 'bg-sun-soft' : player.rank <= 3 ? 'bg-sky-soft' : 'bg-surface',
                 )}
               >
-                <span className="w-10 font-pixel text-sm">{player.rank}.</span>
-                <Kart kart={player.kart} scale={2} title={false} />
-                <span className="flex-1 truncate text-lg font-bold">{player.nickname}</span>
+                <span className="w-7 shrink-0 font-pixel text-xs">{player.rank}.</span>
+                <Kart kart={player.kart} scale={1.5} className="shrink-0" title={false} />
+                <span className="min-w-0 flex-1 truncate font-bold sm:text-lg">{player.nickname}</span>
                 <span className="hidden text-sm sm:inline">{player.correctCount} correct</span>
-                <span className="w-24 text-right font-pixel text-xs">{formatPoints(player.score)}</span>
+                <span className="w-20 shrink-0 text-right font-pixel text-xs">
+                  {formatPoints(player.score)}
+                </span>
               </li>
             ))}
           </ol>
         )}
       </Panel>
 
-      <h2 className="font-pixel text-sm text-sun">Question by question</h2>
+      <h2 className="font-display text-3xl font-bold text-ink">Question by question</h2>
       {session.questions.map((question, index) => (
         <QuestionBreakdown key={question.id} detail={detail.data} index={index} />
       ))}
