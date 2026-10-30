@@ -14,10 +14,12 @@ services:
 pipeline:
   # Copied from the azd environment to GitHub repository variables by `azd pipeline config`.
   variables:
+    - AUTH_MODE
     - ENTRA_CLIENT_ID
     - ENTRA_TENANT_ID
 
 hooks:
+  # Guest hosting skips these Entra setup hooks; AUTH_MODE=entra opts in.
   # Creates (once) the Entra ID app registration and stores ENTRA_CLIENT_ID / ENTRA_TENANT_ID.
   preprovision:
     windows:

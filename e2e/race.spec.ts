@@ -6,7 +6,7 @@ test('a host builds a quiz and runs a full race with three phones', async ({ bro
   await snap(host, '01-landing');
 
   // Build a quiz in the editor.
-  await host.getByRole('button', { name: 'Host sign-in' }).click();
+  await host.getByRole('button', { name: 'Host a quiz' }).click();
   await expect(host.getByRole('heading', { name: 'Your quizzes' })).toBeVisible();
   await host.getByRole('button', { name: 'New quiz' }).first().click();
   await host.getByLabel('Title').fill('E2E Grand Prix');
@@ -37,6 +37,7 @@ test('a host builds a quiz and runs a full race with three phones', async ({ bro
   // Question 1 – multiple choice.
   await host.getByTestId('primary-action').click();
   await expect(host.getByTestId('primary-action')).toHaveText(/Get ready/);
+  await expect(host.getByTestId('dog-referee')).toHaveAttribute('data-pose', 'idle');
   await snap(host, '05-host-countdown');
   for (const phone of [ann, ben, cat])
     await expect(phone.getByRole('button', { name: 'Paris' })).toBeVisible();
@@ -70,6 +71,8 @@ test('a host builds a quiz and runs a full race with three phones', async ({ bro
   // Final podium and hitlist.
   await host.getByTestId('primary-action').click();
   await expect(host.getByTestId('podium-1')).toContainText('Ann');
+  await expect(host.getByTestId('dog-referee')).toHaveAttribute('data-pose', 'finish');
+  await expect(host.locator('.dog-referee__flag')).toHaveCSS('animation-name', 'pq-referee-finish');
   await expect(ben.getByText('3rd', { exact: true })).toBeVisible();
   await host.waitForTimeout(3000);
   await snap(host, '13-host-podium');
@@ -82,12 +85,13 @@ test('a host builds a quiz and runs a full race with three phones', async ({ bro
   await snap(host, '15-host-results');
 });
 
-test('a player who reloads mid-race keeps their name, kart and score', async ({ browser, request }) => {
-  const { sessionId, pin } = await createRaceViaApi(request, [
+test('a player who reloads mid-race keeps their name, kart and score', async ({ browser }) => {
+  const host = await openHostPage(browser, '/host');
+  const { sessionId, pin } = await createRaceViaApi(host, [
     mcQuestion('q1', 'Pick the bolt', ['Bolt', 'Cone']),
     mcQuestion('q2', 'Pick the cone', ['Bolt', 'Cone'], 1),
   ]);
-  const host = await openHostPage(browser, `/host/live/${sessionId}`);
+  await host.goto(`/host/live/${sessionId}`);
   const zoe = await joinAsPlayer(browser, pin, 'Zoe');
   await expect(host.getByTestId('racer-count')).toHaveText('1 racer');
   await host.getByTestId('primary-action').click();
@@ -100,9 +104,10 @@ test('a player who reloads mid-race keeps their name, kart and score', async ({ 
   await expect(zoe.locator('header')).toContainText(/[1-9]\d{2}/);
 });
 
-test('a locked race turns late racers away until it is unlocked', async ({ browser, request }) => {
-  const { sessionId, pin } = await createRaceViaApi(request, [mcQuestion('q1', 'Ready?', ['Yes', 'No'])]);
-  const host = await openHostPage(browser, `/host/live/${sessionId}`);
+test('a locked race turns late racers away until it is unlocked', async ({ browser }) => {
+  const host = await openHostPage(browser, '/host');
+  const { sessionId, pin } = await createRaceViaApi(host, [mcQuestion('q1', 'Ready?', ['Yes', 'No'])]);
+  await host.goto(`/host/live/${sessionId}`);
   await expect(host.getByText('Waiting for racers…')).toBeVisible();
   await host.getByRole('button', { name: 'Lock race (L)' }).click();
   await expect(host.getByText('Race locked – nobody new can join.')).toBeVisible();

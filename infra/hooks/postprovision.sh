@@ -1,5 +1,6 @@
 #!/bin/sh
 # azd postprovision hook: registers the deployed site URL as a SPA redirect URI.
+# Guest hosting skips all app registration changes.
 #
 # Adds WEB_URI (a Bicep output) to spa.redirectUris of the Entra ID app registration ENTRA_CLIENT_ID,
 # keeping the existing URIs. Never fails the deployment: in CI, without a logged-in Azure CLI or when
@@ -7,6 +8,21 @@
 #
 # POSIX sh; needs only the Azure CLI (values are read with --query ... -o tsv, no jq).
 set -u
+
+case "${AUTH_MODE:-guest}" in
+  guest)
+    echo 'Using guest hosting; no sign-in redirect URI is needed.'
+    if [ -n "${WEB_URI:-}" ]; then
+      echo "Power Quiz URL: $WEB_URI"
+    fi
+    exit 0
+    ;;
+  entra) ;;
+  *)
+    echo 'ERROR: AUTH_MODE must be guest or entra for an Azure deployment.' >&2
+    exit 1
+    ;;
+esac
 
 web_uri=${WEB_URI:-}
 client_id=${ENTRA_CLIENT_ID:-}

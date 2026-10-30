@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { Button } from '../../design/Button';
 import { TextField } from '../../design/Field';
 import { Notice, Panel } from '../../design/Panel';
+import { RaceScene } from '../../design/Scenery';
 import { Logo, Spinner } from '../../design/Widgets';
 
 function SignInScreen() {
@@ -34,14 +35,19 @@ function SignInScreen() {
             <Button
               size="lg"
               icon="user"
-              onClick={() => void auth.signIn({ returnTo: window.location.href }).catch(() => undefined)}
+              onClick={() =>
+                void auth.signIn({ returnTo: window.location.href }).catch((signInError: unknown) => {
+                  setError(signInError instanceof Error ? signInError.message : 'Sign-in failed.');
+                })
+              }
             >
               Sign in with Microsoft
             </Button>
+            {error && <Notice tone="error">{error}</Notice>}
           </div>
         ) : (
           <form onSubmit={signInDev} className="flex flex-col gap-4">
-            <Notice>Development mode: no real authentication. Configure Entra ID before going live.</Notice>
+            <Notice>Development mode: name-only access. Use guest hosting or Entra ID in production.</Notice>
             <TextField
               label="Your name"
               value={name}
@@ -56,11 +62,12 @@ function SignInScreen() {
           </form>
         )}
       </Panel>
+      <RaceScene />
     </main>
   );
 }
 
-/** Gate for host pages: loads sign-in support lazily and shows the sign-in screen when needed. */
+/** Prepares private host access lazily; guest hosts go straight through without a sign-in screen. */
 export function RequireHost({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const { activate, status } = auth;
@@ -69,11 +76,11 @@ export function RequireHost({ children }: { children: ReactNode }) {
   }, [activate, status]);
 
   if (status === 'idle' || status === 'loading')
-    return <Spinner className="min-h-dvh" label="Checking sign-in…" />;
+    return <Spinner className="min-h-dvh" label="Preparing your host workspace…" />;
   if (status === 'error') {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4">
-        <Notice tone="error">{auth.error ?? 'Sign-in is not available right now.'}</Notice>
+        <Notice tone="error">{auth.error ?? 'Host access is not available right now.'}</Notice>
         <Button onClick={activate}>Try again</Button>
       </main>
     );

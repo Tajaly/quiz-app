@@ -1,21 +1,37 @@
 # Power Quiz 🏁
 
-Live quiz races with a pixel-art kart twist – think Kahoot, but every player drives a kart.
-A **session lead** builds quizzes and runs the race on a big shared screen; **players** join from their phones
+Live quiz races with a sunny pixel-art kart twist – think Kahoot, but every player drives a kart.
+A **host** builds quizzes and runs the race on a big shared screen; **players** join from their phones
 with a QR code or PIN, pick a nickname and a kart, and race to the podium by answering fast.
+**No account is needed for hosts or players by default.**
 
-![The final podium on the big screen](docs/screenshots/host-podium.png)
+![The sunny Power Quiz starting line with PIN entry and account-free hosting](docs/screenshots/landing.png)
+
+| Guest workspace with the sample quiz                                                       | Quiz editor                                                             | Final podium                                                            |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| ![Guest host workspace with Pixel Grand Prix warm-up](docs/screenshots/host-dashboard.png) | ![Quiz editor with guest-host access](docs/screenshots/quiz-editor.png) | ![The final podium on the big screen](docs/screenshots/host-podium.png) |
 
 | Lobby with QR code                                     | Answer reveal                                      | Race-track standings                                         |
 | ------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ |
 | ![Lobby with QR code](docs/screenshots/host-lobby.png) | ![Answer reveal](docs/screenshots/host-reveal.png) | ![Race-track standings](docs/screenshots/host-standings.png) |
 
-| Phone: question                                        | Phone: result                                       | Quiz editor                                      |
-| ------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------ |
-| ![Phone question](docs/screenshots/phone-question.png) | ![Phone result](docs/screenshots/phone-correct.png) | ![Quiz editor](docs/screenshots/quiz-editor.png) |
+| Phone: question                                                                   | Phone: result                                                                          |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| ![Phone question with pastel answer buttons](docs/screenshots/phone-question.png) | ![Correct answer and personal standing on a phone](docs/screenshots/phone-correct.png) |
+
+These are screenshots of the running guest-mode app with demo quizzes and racers. The pictured PINs and
+local join addresses are examples, not active races.
 
 ## Features
 
+- **No account needed to host** – open the host workspace and start creating. A private browser key keeps
+  your quizzes, results and race controls separate from everyone else's. Microsoft Entra ID sign-in remains
+  an opt-in deployment mode.
+- **Sample quiz included** – **Add sample quiz** creates your own editable copy of **Pixel Grand Prix
+  warm-up**: six multiple-choice questions and two open questions, ready to run.
+- **A pixel-dog referee** – a cute, chunky cartoon pup with black ears and a small striped red tie greets racers by the
+  circuit, joins the countdown and waves a chequered flag at the podium. His short tail-wag, blink and flag
+  animations respect reduced-motion preferences.
 - **Reusable quizzes** – multiple-choice questions (2–4 answers, one correct) and open questions, each with its
   own time limit (5–120 s). Add, reorder, duplicate and delete questions; start a race straight from the editor.
 - **Join in seconds** – players scan the QR code or type the 6-digit PIN, choose a nickname and one of
@@ -32,7 +48,10 @@ with a QR code or PIN, pick a nickname and a kart, and race to the podium by ans
 - **Moderation** – profanity filter for nicknames and open answers, kick players, hide answers on the big screen.
 - **Results history** – every race is stored for 90 days with per-question statistics and CSV export.
 - **Retro sound** – original chiptune music and sound effects on the big screen only (mute with `M`).
-- **Sign-in with Microsoft Entra ID** for session leads (single tenant).
+
+The light circuit theme uses original pixel karts, checkered curbs, sky-blue surfaces and
+high-contrast pastel answers. The garage supports keyboard selection, and spatial effects respect
+reduced-motion preferences.
 
 ## How a race works
 
@@ -55,8 +74,8 @@ npm run dev
 ```
 
 - Open <http://localhost:5173> for the app (Vite dev server; the API runs on port 3000 behind a proxy).
-- Click **Host sign-in** – locally you sign in with just a name (dev mode, no real authentication).
-- Use **Add sample quiz** for a ready-made quiz, then **Start race**.
+- Click **Host a quiz** – there is no name, account or sign-in step.
+- Click **Add sample quiz** to create **Pixel Grand Prix warm-up** (8 questions), then **Start race**.
 - Join from a second browser window with the PIN shown on the big screen.
 - To join with real phones on the same Wi-Fi, run `npm run dev:lan` instead and open the big screen via the
   `Network:` URL that Vite prints (e.g. `http://192.168.1.20:5173`) – the QR code points to the address the big
@@ -66,6 +85,19 @@ Without configuration the server keeps everything **in memory**. To persist data
 emulator (`docker compose up -d`) and set the variables from [`.env.example`](.env.example) in a `.env` file.
 
 To try the production build locally: `npm run build && npm start` → <http://localhost:3000>.
+
+### Your private host workspace
+
+On your first visit to a host page, the browser generates a cryptographically random 256-bit host key and
+saves it in local storage. The API and live controls use that key; the server derives a one-way hashed owner
+ID so it never needs to save the key itself. Player PINs, race links and player rejoin tokens do **not** grant
+host access.
+
+Return using the **same browser profile and site address** to find your quizzes and results, including after
+a reload or in another tab. The content is stored on the server, not in local storage; the browser holds only
+the key to it. Clearing site data, changing browsers or closing a private-browsing session removes access.
+There is no account recovery or cross-device sync in guest mode. If browser storage is unavailable, hosting
+shows an error rather than silently creating a temporary workspace.
 
 ## Scripts
 
@@ -83,34 +115,49 @@ To try the production build locally: `npm run build && npm start` → <http://lo
 
 The Cosmos DB repository tests run only when `COSMOS_TEST_ENDPOINT` is set, e.g. against the emulator:
 `COSMOS_TEST_ENDPOINT=http://localhost:8081 npx vitest run --project server test/cosmos.test.ts`.
-Set `E2E_SCREENSHOTS_DIR` when running Playwright to capture screenshots of every race phase.
+
+### Refreshing the screenshots
+
+The README gallery uses real browser captures of the production build in guest mode, including the
+starting page, sample-quiz workspace, editor, race stages and phone feedback. To capture a fresh set in
+PowerShell:
+
+```powershell
+npm run build
+$env:E2E_SCREENSHOTS_DIR = Join-Path $env:TEMP 'power-quiz-screenshots'
+npm run test:e2e
+```
+
+The capture helper waits for fonts and disables animations for stable images. Long pages get both a
+full-page image and a `-viewport.png` version. Update the gallery files in `docs/screenshots` from those
+captures; use the editor's viewport image so its fixed controls are shown in context.
 
 ## Configuration
 
 All settings are environment variables (validated at startup):
 
-| Variable                      | Default               | Description                                                                |
-| ----------------------------- | --------------------- | -------------------------------------------------------------------------- |
-| `PORT`                        | `3000`                | HTTP port                                                                  |
-| `NODE_ENV`                    | `development`         | `production` enforces Entra ID sign-in                                     |
-| `LOG_LEVEL`                   | `info`                | pino log level                                                             |
-| `AUTH_MODE`                   | `entra` if configured | `entra` or `dev` (dev is refused in production)                            |
-| `ENTRA_TENANT_ID`             | –                     | Tenant of the leads (single tenant)                                        |
-| `ENTRA_CLIENT_ID`             | –                     | App registration (SPA + exposed API)                                       |
-| `ENTRA_API_SCOPE_NAME`        | `Quiz.Host`           | Delegated scope required in access tokens                                  |
-| `COSMOS_ENDPOINT`             | – (in-memory)         | Cosmos DB endpoint; uses managed identity / your Entra login without a key |
-| `COSMOS_KEY`                  | –                     | Only for the local emulator                                                |
-| `COSMOS_DATABASE`             | `powerquiz`           | Database name                                                              |
-| `COSMOS_CREATE_IF_NOT_EXISTS` | `false`               | Create database/containers at startup (emulator only)                      |
-| `RESULT_TTL_DAYS`             | `90`                  | How long race results are kept                                             |
-| `TRUST_PROXY`                 | `0`                   | Reverse-proxy hops to trust for client IPs (`1` on App Service)            |
-| `STATIC_DIR`                  | auto                  | Folder with the built web app                                              |
+| Variable                      | Default       | Description                                                                |
+| ----------------------------- | ------------- | -------------------------------------------------------------------------- |
+| `PORT`                        | `3000`        | HTTP port                                                                  |
+| `NODE_ENV`                    | `development` | `production` enables production security headers and refuses dev sign-in   |
+| `LOG_LEVEL`                   | `info`        | pino log level                                                             |
+| `AUTH_MODE`                   | `guest`       | `guest` (no login), `entra` (explicit opt-in), or `dev` (local only)       |
+| `ENTRA_TENANT_ID`             | –             | Tenant of the leads (single tenant)                                        |
+| `ENTRA_CLIENT_ID`             | –             | App registration (SPA + exposed API)                                       |
+| `ENTRA_API_SCOPE_NAME`        | `Quiz.Host`   | Delegated scope required in access tokens                                  |
+| `COSMOS_ENDPOINT`             | – (in-memory) | Cosmos DB endpoint; uses managed identity / your Entra login without a key |
+| `COSMOS_KEY`                  | –             | Only for the local emulator                                                |
+| `COSMOS_DATABASE`             | `powerquiz`   | Database name                                                              |
+| `COSMOS_CREATE_IF_NOT_EXISTS` | `false`       | Create database/containers at startup (emulator only)                      |
+| `RESULT_TTL_DAYS`             | `90`          | How long race results are kept                                             |
+| `TRUST_PROXY`                 | `0`           | Reverse-proxy hops to trust for client IPs (`1` on App Service)            |
+| `STATIC_DIR`                  | auto          | Folder with the built web app                                              |
 
 ## Architecture
 
 ```
-  Phones (players)                         Big screen (lead, Entra ID sign-in)
-  React SPA ──────────┐               ┌─── React SPA + MSAL
+  Phones (players)                         Big screen (lead, private host key)
+  React SPA ──────────┐               ┌─── React SPA (MSAL only in Entra mode)
                       │  HTTPS + WSS  │   (REST /api + Socket.IO, bearer token)
                       ▼               ▼
         Azure App Service (Linux, Node.js 24, single instance)
@@ -134,7 +181,7 @@ All settings are environment variables (validated at startup):
 apps/web          React 19 + Vite SPA: phone flow, big screen, quiz editor, results
 apps/server       Express + Socket.IO server, game engine, Cosmos DB repositories
 packages/shared   Types, zod schemas, socket contracts, scoring rules (used by both)
-infra/            Bicep modules + azd hooks (Entra ID app registration)
+infra/            Bicep modules + azd hooks (optional Entra ID app registration)
 e2e/              Playwright end-to-end tests
 ```
 
@@ -142,15 +189,11 @@ e2e/              Playwright end-to-end tests
 
 ### Prerequisites
 
-- Node.js 24, [Azure Developer CLI](https://aka.ms/azd) and [Azure CLI](https://aka.ms/install-azure-cli)
-  (plus PowerShell 7 on Windows).
+- Node.js 24 and [Azure Developer CLI](https://aka.ms/azd) (plus PowerShell 7 on Windows).
 - An Azure subscription where you can create resource groups and resources (Contributor or Owner).
-- Permission to **register applications** in the Microsoft Entra ID tenant used for sign-in. The Microsoft
-  corporate tenant restricts app registrations, so you may need a demo/non-production tenant.
-- Sign both CLIs in to the **same tenant**:
+- Sign in to Azure for deployment (this is separate from hosting quizzes):
   ```sh
-  az login --tenant <tenant-id-or-domain>
-  azd auth login --tenant-id <tenant-id>
+  azd auth login
   ```
 
 ### Provision and deploy
@@ -159,13 +202,36 @@ e2e/              Playwright end-to-end tests
 azd up   # asks for an environment name, subscription and region (e.g. germanywestcentral)
 ```
 
-`azd up` creates the Entra ID app registration "Power Quiz (&lt;env&gt;)" (SPA + API scope `Quiz.Host`) once,
-then provisions `rg-<env>`: App Service (Linux, B1), serverless Cosmos DB, Log Analytics and Application
-Insights. It then adds the site URL as a SPA redirect URI, builds the app (`npm run build` → `.deploy/`) and
-deploys it. Afterwards use `azd deploy` (code only) or `azd provision` (infrastructure only).
-Your user gets Cosmos DB data access, so `azd env get-values` gives you `COSMOS_ENDPOINT`/`ENTRA_*`
-to run the server locally against Azure. `azd down` does not delete the app registration
-(`az ad app delete --id <ENTRA_CLIENT_ID>`).
+`azd up` provisions `rg-<env>`: App Service (Linux, B1), serverless Cosmos DB, Log Analytics and Application
+Insights, then builds the app (`npm run build` → `.deploy/`) and deploys it. Guest hosting is the default:
+there is **no Entra app registration, redirect URI or Microsoft host sign-in to configure**.
+Afterwards use `azd deploy` (code only) or `azd provision` (infrastructure only). Your user gets Cosmos DB
+data access; use `COSMOS_ENDPOINT` from `azd env get-values` and your Azure credentials to run locally
+against Azure.
+
+To switch an existing Entra deployment to guest hosting, run `azd env set AUTH_MODE guest` followed by
+`azd up`, so both the App Service settings and application code are updated.
+
+### Optional Microsoft Entra ID sign-in
+
+For a deployment that requires organizational accounts instead, explicitly set `AUTH_MODE=entra`.
+This also requires the [Azure CLI](https://aka.ms/install-azure-cli) and permission to **register applications**
+in the sign-in tenant. Sign the CLIs in to the same tenant, then provision:
+
+```sh
+az login --tenant <tenant-id-or-domain>
+azd auth login --tenant-id <tenant-id>
+azd env set AUTH_MODE entra
+azd up
+```
+
+Only in this mode, the hooks create or reuse "Power Quiz (&lt;env&gt;)" (SPA + API scope `Quiz.Host`) and add
+the site URL as a redirect URI. Local Entra runs also require `AUTH_MODE=entra`, `ENTRA_CLIENT_ID` and
+`ENTRA_TENANT_ID`; having the IDs alone does not enable sign-in. `azd down` does not delete the optional app
+registration (`az ad app delete --id <ENTRA_CLIENT_ID>`).
+
+Guest keys and Entra accounts have separate ownership. Changing modes does not delete, share or migrate
+existing quizzes and results; switch back to the original mode and identity to access them.
 
 ### CI/CD with GitHub Actions
 
@@ -179,14 +245,19 @@ azd pipeline config   # optionally: --principal-role Contributor (no other role 
 ```
 
 This creates a federated (OIDC) service principal and sets the repository variables `AZURE_CLIENT_ID`,
-`AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_ENV_NAME`, `AZURE_LOCATION`, `ENTRA_CLIENT_ID` and
-`ENTRA_TENANT_ID`. The deploy workflow is skipped until these variables exist, and CI never creates or changes
-the Entra ID app registration.
+`AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_ENV_NAME` and `AZURE_LOCATION`. The deploy workflow defaults
+to guest hosting and needs no `ENTRA_*` variables. For an Entra deployment, also set the repository variables
+`AUTH_MODE=entra`, `ENTRA_CLIENT_ID` and `ENTRA_TENANT_ID` (exported by `azd pipeline config` when configured).
+CI never creates or changes an Entra ID app registration.
 
 ## Security & privacy
 
-- Leads sign in with Entra ID; the API and the Socket.IO handshake validate access tokens (signature, issuer,
-  tenant, audience and the `Quiz.Host` scope). Leads only ever see their own quizzes and races.
+- Guest hosting is open to anyone, but each browser's private key grants access only to its own quizzes and
+  races. The API and Socket.IO handshake require this key; only its hash is stored as the owner ID. Keep the
+  key private and serve public deployments over HTTPS. Anyone using the same browser profile can access its
+  guest workspace; it is not suitable for confidential content on a shared computer.
+- In optional Entra mode, the API and Socket.IO handshake validate access tokens (signature, issuer, tenant,
+  audience and the `Quiz.Host` scope). Leads only ever see their own quizzes and races in either mode.
 - Players get an unguessable per-race token for rejoining; wrong PIN guesses are rate-limited per IP.
 - Every input is validated with zod; nicknames are unique per race; CSV exports are protected against formula
   injection; strict security headers (CSP, HSTS, …) are set; Cosmos DB key access is disabled in Azure.

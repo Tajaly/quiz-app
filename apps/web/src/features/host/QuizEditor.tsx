@@ -41,7 +41,7 @@ function IconButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="p-2 text-mist transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
+      className="flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 text-mist transition-colors hover:bg-sky-soft hover:text-sky disabled:opacity-30"
     >
       <Icon name={icon} size={2} />
     </button>
@@ -64,8 +64,8 @@ function TypeToggle({
       aria-checked={active}
       onClick={onClick}
       className={cx(
-        'px-3 py-2 text-sm font-bold uppercase transition-colors',
-        active ? 'bg-sun text-ink' : 'bg-night-950 text-mist hover:text-white',
+        'min-h-11 rounded-lg px-3 py-2 text-sm font-bold transition-colors',
+        active ? 'bg-sun text-ink' : 'bg-surface text-mist hover:text-sky',
       )}
     >
       {children}
@@ -98,8 +98,8 @@ function QuestionCard({
   return (
     <Panel aria-label={`Question ${index + 1}`}>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <span className="font-pixel text-lg text-sun">Q{index + 1}</span>
-        <div role="radiogroup" aria-label="Question type" className="px-frame m-1 flex">
+        <span className="font-display text-3xl font-bold text-sky">Q{index + 1}</span>
+        <div role="radiogroup" aria-label="Question type" className="flex rounded-xl bg-surface p-1">
           <TypeToggle
             active={question.type === 'mc'}
             onClick={() => onChange((q) => changeQuestionType(q, 'mc'))}
@@ -175,7 +175,7 @@ function QuestionCard({
                       value={option.text}
                       maxLength={LIMITS.optionTextMax}
                       placeholder={`Answer ${style.label}${optionIndex >= LIMITS.optionsMin ? ' (optional)' : ''}`}
-                      className="min-w-0 flex-1 bg-white/95 px-2 py-2 text-lg text-ink placeholder:text-ink/40 focus:outline-none focus-visible:outline-sky"
+                      className="min-w-0 flex-1 rounded-lg bg-white px-2 py-2 text-base text-ink placeholder:text-mist"
                       onChange={(event) =>
                         onChange((q) =>
                           q.type === 'mc'
@@ -198,8 +198,10 @@ function QuestionCard({
                         onChange((q) => (q.type === 'mc' ? { ...q, correctOptionId: option.id } : q))
                       }
                       className={cx(
-                        'flex h-10 w-10 shrink-0 items-center justify-center',
-                        correct ? 'bg-lime text-ink' : 'bg-black/25 text-white/70 hover:text-white',
+                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
+                        correct
+                          ? 'bg-leaf text-white'
+                          : 'bg-white text-mist hover:bg-lime-soft hover:text-leaf',
                       )}
                     >
                       <Icon name="check" size={2} />
@@ -218,7 +220,7 @@ function QuestionCard({
                             return { ...q, options, correctOptionId };
                           })
                         }
-                        className="flex h-10 w-8 shrink-0 items-center justify-center opacity-70 hover:opacity-100"
+                        className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-white"
                       >
                         <Icon name="cross" size={1.6} />
                       </button>
@@ -317,10 +319,10 @@ function QuizEditor({ quizId, initial }: { quizId?: string; initial: QuizInput }
   return (
     <div className="flex flex-col gap-6 pb-28">
       <div className="flex flex-wrap items-center gap-4">
-        <Link to="/host" className="inline-flex items-center gap-2 text-mist hover:text-white">
+        <Link to="/host" className="inline-flex items-center gap-2 text-mist hover:text-sky">
           <Icon name="back" size={1.6} /> Quizzes
         </Link>
-        <Heading className="text-lg sm:text-2xl">{quizId ? 'Edit quiz' : 'New quiz'}</Heading>
+        <Heading className="text-3xl sm:text-4xl">{quizId ? 'Edit quiz' : 'New quiz'}</Heading>
       </div>
 
       <Panel>
@@ -388,11 +390,11 @@ function QuizEditor({ quizId, initial }: { quizId?: string; initial: QuizInput }
         </div>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t-4 border-ink bg-night-900/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-panel">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3">
           <div className="min-w-0 flex-1" aria-live="polite">
             {message ? (
-              <span className={cx('font-bold', message.tone === 'error' ? 'text-[#ff8a8f]' : 'text-lime')}>
+              <span className={cx('font-bold', message.tone === 'error' ? 'text-flame' : 'text-leaf')}>
                 {message.text}
               </span>
             ) : (

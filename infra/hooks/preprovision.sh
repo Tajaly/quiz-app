@@ -1,5 +1,6 @@
 #!/bin/sh
-# azd preprovision hook: creates (or reuses) the Entra ID app registration for Power Quiz.
+# azd preprovision hook: configures Entra ID only when AUTH_MODE=entra is selected.
+# Guest hosting is the default and needs no app registration.
 #
 # A single-tenant app registration acts as both the SPA (MSAL, auth code + PKCE) and the API the SPA
 # calls (delegated scope api://<appId>/Quiz.Host). ENTRA_CLIENT_ID and ENTRA_TENANT_ID are stored in
@@ -10,6 +11,18 @@
 #
 # POSIX sh; needs only the Azure CLI (values are read with --query ... -o tsv, no jq).
 set -eu
+
+case "${AUTH_MODE:-guest}" in
+  guest)
+    echo 'Using guest hosting; no Entra ID app registration is needed.'
+    exit 0
+    ;;
+  entra) ;;
+  *)
+    echo 'ERROR: AUTH_MODE must be guest or entra for an Azure deployment.' >&2
+    exit 1
+    ;;
+esac
 
 SCOPE_NAME='Quiz.Host'
 SCOPE_TITLE='Host Power Quiz races'

@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router';
 import { pinSchema } from '@power-quiz/shared';
 import { Panel } from '../../design/Panel';
+import { RaceScene } from '../../design/Scenery';
 import { Logo, Spinner } from '../../design/Widgets';
 import { PinForm } from '../landing/Landing';
 import { MessageScreen } from '../landing/NotFound';
@@ -17,6 +18,7 @@ function PinEntry({ error }: { error?: string }) {
       <Panel title="Join a race">
         <PinForm initialError={error} />
       </Panel>
+      <RaceScene />
     </main>
   );
 }

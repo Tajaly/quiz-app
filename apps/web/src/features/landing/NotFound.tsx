@@ -22,8 +22,8 @@ export function MessageScreen({
         <Logo size="sm" />
       </Link>
       <Panel className="flex max-w-lg flex-col items-center gap-4">
-        <Icon name={icon} size={6} className="text-sun" />
-        <h1 className="font-pixel text-lg leading-relaxed">{title}</h1>
+        <Icon name={icon} size={6} className="text-sun-dark" />
+        <h1 className="font-display text-4xl font-bold leading-tight">{title}</h1>
         {children && <div className="text-lg text-mist">{children}</div>}
         {action}
       </Panel>
@@ -31,7 +31,7 @@ export function MessageScreen({
   );
 }
 
-const linkClass = 'font-pixel text-xs text-sky underline underline-offset-4 hover:text-white';
+const linkClass = 'font-semibold text-sky underline underline-offset-4 hover:text-sky-dark';
 
 export function NotFound() {
   return (

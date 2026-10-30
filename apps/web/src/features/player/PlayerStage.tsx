@@ -11,6 +11,7 @@ import { answerStyle } from '../../design/answers';
 import { Button } from '../../design/Button';
 import { TextField } from '../../design/Field';
 import { Notice } from '../../design/Panel';
+import { StartingLine } from '../../design/Scenery';
 import { Icon, Kart } from '../../design/sprites/Sprites';
 import { Confetti, TimerBar, TrafficLight, lightStateFor } from '../../design/Widgets';
 import { cx } from '../../lib/cx';
@@ -26,20 +27,20 @@ export function PlayerHeader({ view, online }: { view: PlayerView; online: boole
     view.phase !== 'lobby' &&
     !(view.questionIndex === 0 && (view.phase === 'countdown' || view.phase === 'question'));
   return (
-    <header className="sticky top-0 z-20 border-b-4 border-ink bg-night-900/95 backdrop-blur">
-      <div className="mx-auto flex max-w-lg items-center gap-3 px-3 py-2">
+    <header className="race-header sticky top-0 z-20">
+      <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
         <Kart kart={view.me.kart} scale={2} title={false} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-bold leading-tight">{view.me.nickname}</p>
           <p className="truncate text-xs text-mist">{view.quizTitle}</p>
         </div>
         <div className="text-right">
-          <p className="font-pixel text-sm text-sun">{formatPoints(view.me.score)}</p>
+          <p className="font-pixel text-sm text-sun-dark">{formatPoints(view.me.score)}</p>
           {showRank && <p className="text-xs text-mist">{ordinal(view.me.rank)} place</p>}
         </div>
       </div>
       {!online && (
-        <p role="status" className="bg-flame px-3 py-1 text-center text-sm font-bold">
+        <p role="status" className="bg-flame-soft px-3 py-2 text-center text-sm font-bold text-flame-dark">
           Connection lost – reconnecting…
         </p>
       )}
@@ -49,7 +50,7 @@ export function PlayerHeader({ view, online }: { view: PlayerView; online: boole
 
 function Screen({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cx('mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-3 py-5', className)}>
+    <div className={cx('mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-6', className)}>
       {children}
     </div>
   );
@@ -66,13 +67,16 @@ function QuestionLabel({ view }: { view: PlayerView }) {
 function Lobby({ view }: { view: PlayerView }) {
   return (
     <Screen className="items-center justify-center text-center">
-      <p className="font-pixel text-sm text-sun">You’re on the grid!</p>
-      <div className="animate-bob py-4">
-        <Kart kart={view.me.kart} scale={8} className="max-w-full" />
+      <p className="font-display text-4xl font-bold text-sky-dark">You’re on the grid!</p>
+      <div className="kart-showcase flex w-full flex-col items-center px-5 pt-8">
+        <div className="animate-bob py-4">
+          <Kart kart={view.me.kart} scale={8} className="max-w-full" />
+        </div>
+        <StartingLine className="mb-6" />
       </div>
       <p className="text-3xl font-bold">{view.me.nickname}</p>
       <p className="text-lg text-mist">Look at the big screen – the host starts the race soon.</p>
-      <p className="px-frame m-1 bg-night-800 px-4 py-2 font-pixel text-xs">
+      <p className="rounded-full bg-lime-soft px-4 py-2 text-sm font-bold text-leaf">
         {view.playerCount} {view.playerCount === 1 ? 'racer' : 'racers'} ready
       </p>
     </Screen>
@@ -114,10 +118,9 @@ function OptionButton({
       disabled={disabled}
       aria-pressed={selected}
       className={cx(
-        'px-frame-raised m-1 flex min-h-20 items-center gap-3 px-4 py-3 text-left text-xl font-bold transition-transform active:translate-y-1',
+        'answer-button px-frame-raised m-1 flex min-h-20 items-center gap-3 px-4 py-3 text-left text-xl font-bold transition-transform active:translate-y-0.5',
         style.className,
         disabled && !selected && 'opacity-40',
-        selected && 'scale-[1.02] [--px-color:white]',
       )}
     >
       <Icon name={style.icon} size={3} />
@@ -209,7 +212,7 @@ function Question({ timed, onAnswer }: { timed: Timed<PlayerView>; onAnswer: Ans
 
       {error && <Notice tone="error">{error}</Notice>}
       {submitted ? (
-        <p role="status" className="animate-pop text-center font-pixel text-sm text-lime">
+        <p role="status" className="animate-pop text-center text-base font-bold text-leaf">
           Locked in! Waiting for the others…
         </p>
       ) : (
@@ -223,9 +226,9 @@ function Standing({ view }: { view: PlayerView }) {
   const result = view.result;
   if (!result) return null;
   return (
-    <div className="px-frame m-1 flex flex-col items-center gap-1 bg-night-800 p-4 text-center">
+    <div className="game-panel flex flex-col items-center gap-2 p-6 text-center">
       <p className="font-pixel text-xs text-mist">You’re in</p>
-      <p className="px-text-outline font-pixel text-4xl text-sun">{ordinal(result.rank)}</p>
+      <p className="font-display text-6xl font-bold text-sky-dark">{ordinal(result.rank)}</p>
       <p className="text-lg">{formatPoints(result.totalScore)} points</p>
       <p className="text-sm text-mist">
         {result.rank === 1
@@ -244,23 +247,23 @@ function Result({ view }: { view: PlayerView }) {
   let card: ReactNode;
   if (result.type === 'open') {
     card = result.answered ? (
-      <div className="px-frame m-1 flex flex-col items-center gap-2 bg-sky-dark p-6 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-2xl bg-sky-soft p-6 text-center text-sky-dark">
         <Icon name="check" size={5} />
         <p className="font-pixel text-lg">Answer sent!</p>
         {result.myAnswer?.text && <p className="text-xl">“{result.myAnswer.text}”</p>}
-        <p className="text-sm text-white/80">
+        <p className="text-sm leading-relaxed">
           Open questions aren’t scored – see what everyone said on the big screen.
         </p>
       </div>
     ) : (
-      <div className="px-frame m-1 flex flex-col items-center gap-2 bg-night-600 p-6 text-center">
+      <div className="game-panel flex flex-col items-center gap-3 p-6 text-center">
         <Icon name="clock" size={5} />
         <p className="font-pixel text-lg">No answer this time</p>
       </div>
     );
   } else if (result.correct) {
     card = (
-      <div className="px-frame animate-pop m-1 flex flex-col items-center gap-2 bg-lime p-6 text-center text-ink">
+      <div className="animate-pop flex flex-col items-center gap-3 rounded-2xl bg-lime p-6 text-center text-ink">
         <Icon name="check" size={6} />
         <p className="font-pixel text-xl">Correct!</p>
         <p className="font-pixel text-3xl">+{formatPoints(result.points)}</p>
@@ -270,8 +273,8 @@ function Result({ view }: { view: PlayerView }) {
     card = (
       <div
         className={cx(
-          'px-frame m-1 flex flex-col items-center gap-2 p-6 text-center',
-          result.answered ? 'animate-shake bg-flame' : 'bg-night-600',
+          'flex flex-col items-center gap-3 rounded-2xl p-6 text-center',
+          result.answered ? 'animate-shake bg-flame-soft text-flame-dark' : 'bg-surface-strong',
         )}
       >
         <Icon name={result.answered ? 'cross' : 'clock'} size={6} />
@@ -302,17 +305,17 @@ function Final({ view }: { view: PlayerView }) {
       {final.rank === 1 && <Confetti pieces={40} />}
       <p className="font-pixel text-sm text-mist">Race finished</p>
       {podium && <Icon name="trophy" size={9} className="animate-pop text-sun" />}
-      <p className="px-text-outline font-pixel text-5xl text-sun">{ordinal(final.rank)}</p>
+      <p className="font-display text-7xl font-bold text-sky-dark">{ordinal(final.rank)}</p>
       <p className="text-xl">
         of {final.totalPlayers} {final.totalPlayers === 1 ? 'racer' : 'racers'}
       </p>
-      <div className="px-frame m-1 grid w-full grid-cols-2 gap-2 bg-night-800 p-4">
+      <div className="game-panel grid w-full grid-cols-2 gap-2 p-4">
         <div>
-          <p className="font-pixel text-lg text-sun">{formatPoints(final.score)}</p>
+          <p className="font-pixel text-lg text-sun-dark">{formatPoints(final.score)}</p>
           <p className="text-sm text-mist">points</p>
         </div>
         <div>
-          <p className="font-pixel text-lg text-sun">{final.correctCount}</p>
+          <p className="font-pixel text-lg text-sun-dark">{final.correctCount}</p>
           <p className="text-sm text-mist">correct answers</p>
         </div>
       </div>
@@ -321,11 +324,11 @@ function Final({ view }: { view: PlayerView }) {
           <li
             key={player.playerId}
             className={cx(
-              'px-frame m-1 flex items-center gap-3 bg-night-800 px-3 py-2',
-              player.playerId === view.me.id && 'bg-night-500',
+              'flex items-center gap-3 rounded-xl px-3 py-3',
+              player.playerId === view.me.id ? 'bg-sun-soft' : 'bg-panel',
             )}
           >
-            <span className="w-8 font-pixel text-sm text-sun">{player.rank}.</span>
+            <span className="w-8 font-pixel text-sm text-sun-dark">{player.rank}.</span>
             <Kart kart={player.kart} scale={2} title={false} />
             <span className="flex-1 truncate font-bold">{player.nickname}</span>
             <span className="font-pixel text-xs">{formatPoints(player.score)}</span>

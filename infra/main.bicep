@@ -15,10 +15,16 @@ param principalId string = ''
 @description('Type of the deploying principal (azd sets AZURE_PRINCIPAL_TYPE). Service principals (CI) get no Cosmos DB data access.')
 param principalType string = 'User'
 
-@minLength(36)
+@allowed([
+  'guest'
+  'entra'
+])
+@description('Host access mode. Guest hosting needs no account or Entra app registration.')
+param authMode string = 'guest'
+
 @maxLength(36)
-@description('Application (client) ID of the Entra ID app registration (SPA + API). Created by the preprovision hook.')
-param entraClientId string
+@description('Application (client) ID for optional Entra sign-in. Created by the preprovision hook only when AUTH_MODE=entra.')
+param entraClientId string = ''
 
 @description('Tenant ID of the Entra ID app registration. Empty means the tenant of this deployment.')
 param entraTenantId string = ''
@@ -75,7 +81,7 @@ module web 'modules/appservice.bicep' = {
     // ApplicationInsightsAgent_EXTENSION_VERSION; App Service injects PORT.
     appSettings: {
       NODE_ENV: 'production'
-      AUTH_MODE: 'entra'
+      AUTH_MODE: authMode
       ENTRA_TENANT_ID: empty(entraTenantId) ? tenant().tenantId : entraTenantId
       ENTRA_CLIENT_ID: entraClientId
       ENTRA_API_SCOPE_NAME: 'Quiz.Host'

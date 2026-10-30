@@ -8,7 +8,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(0).max(65535).default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-  AUTH_MODE: z.enum(['entra', 'dev']).optional(),
+  AUTH_MODE: z.enum(['guest', 'entra', 'dev']).default('guest'),
   ENTRA_TENANT_ID: z.string().trim().optional(),
   ENTRA_CLIENT_ID: z.string().trim().optional(),
   ENTRA_API_SCOPE_NAME: z.string().trim().default('Quiz.Host'),
@@ -22,7 +22,7 @@ const envSchema = z.object({
 });
 
 export type AuthConfig =
-  { mode: 'dev' } | { mode: 'entra'; tenantId: string; clientId: string; scopeName: string };
+  { mode: 'guest' | 'dev' } | { mode: 'entra'; tenantId: string; clientId: string; scopeName: string };
 
 export interface CosmosConfig {
   endpoint: string;
@@ -57,7 +57,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   const values = parsed.data;
 
-  const mode = values.AUTH_MODE ?? (values.ENTRA_TENANT_ID && values.ENTRA_CLIENT_ID ? 'entra' : 'dev');
+  const mode = values.AUTH_MODE;
   let auth: AuthConfig;
   if (mode === 'entra') {
     if (!values.ENTRA_TENANT_ID || !values.ENTRA_CLIENT_ID) {
@@ -70,12 +70,10 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
       scopeName: values.ENTRA_API_SCOPE_NAME,
     };
   } else {
-    if (values.NODE_ENV === 'production') {
-      throw new Error(
-        'Dev sign-in is not allowed in production. Configure ENTRA_TENANT_ID and ENTRA_CLIENT_ID.',
-      );
+    if (mode === 'dev' && values.NODE_ENV === 'production') {
+      throw new Error('Dev sign-in is not allowed in production. Use AUTH_MODE=guest or configure Entra ID.');
     }
-    auth = { mode: 'dev' };
+    auth = { mode };
   }
 
   return {

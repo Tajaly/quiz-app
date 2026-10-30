@@ -10,10 +10,10 @@ export interface AnswerStyle {
 
 /** Colour + shape + letter per answer slot, so options never rely on colour alone. */
 export const ANSWER_STYLES: readonly AnswerStyle[] = [
-  { label: 'A', icon: 'cone', className: 'bg-[#d62839] text-white', barColor: '#d62839' },
-  { label: 'B', icon: 'tire', className: 'bg-[#1d6fd1] text-white', barColor: '#1d6fd1' },
-  { label: 'C', icon: 'bolt', className: 'bg-sun text-ink', barColor: '#ffc93c' },
-  { label: 'D', icon: 'flag', className: 'bg-[#2d8a3e] text-white', barColor: '#2d8a3e' },
+  { label: 'A', icon: 'cone', className: 'bg-[#ffe0da] text-[#7d2934]', barColor: '#f4a89e' },
+  { label: 'B', icon: 'tire', className: 'bg-[#dceeff] text-[#194e7c]', barColor: '#91bfe8' },
+  { label: 'C', icon: 'bolt', className: 'bg-sun-soft text-[#724800]', barColor: '#f4ce60' },
+  { label: 'D', icon: 'flag', className: 'bg-lime-soft text-[#285c3e]', barColor: '#a6d58d' },
 ];
 
 export function answerStyle(index: number): AnswerStyle {

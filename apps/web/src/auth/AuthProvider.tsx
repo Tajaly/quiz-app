@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { ClientConfig } from '@power-quiz/shared';
 import { loadClientConfig } from '../lib/config';
+import { getOrCreateGuestHostToken, readGuestHostToken } from './guestHost';
 
 export type AuthStatus = 'idle' | 'loading' | 'signedOut' | 'signedIn' | 'error';
 
@@ -23,7 +24,7 @@ export interface AuthContextValue {
   mode: ClientConfig['authMode'] | null;
   user: AuthUser | null;
   error: string | null;
-  /** Loads sign-in support on demand, so participants' phones never download MSAL. */
+  /** Prepares host access on demand; players never create host keys or download MSAL. */
   activate(): void;
   signIn(options?: { devName?: string; returnTo?: string }): Promise<void>;
   signOut(): Promise<void>;
@@ -39,6 +40,31 @@ interface AuthBackend {
 }
 
 const DEV_USER_KEY = 'pq:devUser';
+
+async function createGuestBackend(): Promise<AuthBackend> {
+  await getOrCreateGuestHostToken();
+  const user = { name: 'Guest host' };
+  return {
+    mode: 'guest',
+    currentUser: () => user,
+    async signIn() {
+      return user;
+    },
+    async signOut() {
+      throw new Error('Guest hosts do not sign out. Return home to leave your host workspace.');
+    },
+    async getToken() {
+      // Tabs that raced to create the first key converge on the one this browser kept.
+      const token = readGuestHostToken();
+      if (token === null) {
+        throw new Error(
+          'Your host key was removed from this browser. Reload the page to start a new host workspace.',
+        );
+      }
+      return token;
+    },
+  };
+}
 
 function createDevBackend(): AuthBackend {
   const read = () => {
@@ -126,7 +152,7 @@ async function createEntraBackend(entra: NonNullable<ClientConfig['entra']>): Pr
   };
 }
 
-const errorMessage = (error: unknown) => (error instanceof Error ? error.message : 'Sign-in failed.');
+const errorMessage = (error: unknown) => (error instanceof Error ? error.message : 'Host access failed.');
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -142,14 +168,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const backendRef = useRef<Promise<AuthBackend> | null>(null);
 
   const backend = useCallback(() => {
-    backendRef.current ??= loadClientConfig().then((config) =>
-      config.authMode === 'entra' && config.entra ? createEntraBackend(config.entra) : createDevBackend(),
-    );
+    backendRef.current ??= loadClientConfig().then((config) => {
+      switch (config.authMode) {
+        case 'guest':
+          return createGuestBackend();
+        case 'entra':
+          if (!config.entra) throw new Error('Microsoft sign-in is not configured. Contact the site owner.');
+          return createEntraBackend(config.entra);
+        case 'dev':
+          return createDevBackend();
+        default:
+          throw new Error('Host access is not configured correctly. Contact the site owner.');
+      }
+    });
     return backendRef.current;
   }, []);
 
   const activate = useCallback(() => {
-    setState((current) => (current.status === 'idle' ? { ...current, status: 'loading' } : current));
+    setState((current) => ({ ...current, status: 'loading', error: null }));
     backend().then(
       (ready) => {
         const user = ready.currentUser();

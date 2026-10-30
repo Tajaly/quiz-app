@@ -7,8 +7,7 @@ import {
 } from 'react';
 import { cx } from '../lib/cx';
 
-const fieldClass =
-  'px-frame m-1 w-[calc(100%-8px)] bg-night-950 px-3 py-2.5 text-lg text-white placeholder:text-mist/50 focus:outline-none focus-visible:outline-sky';
+const fieldClass = 'race-field m-1 w-[calc(100%-8px)] px-3 py-2.5 text-base placeholder:text-mist';
 
 export function Label({
   htmlFor,
@@ -23,7 +22,7 @@ export function Label({
   return (
     <div className="mb-1 flex items-baseline justify-between gap-2 text-sm font-semibold text-mist">
       <label htmlFor={htmlFor}>{children}</label>
-      {hint && <span className="text-xs font-normal text-mist/70">{hint}</span>}
+      {hint && <span className="text-xs font-normal text-mist">{hint}</span>}
     </div>
   );
 }
@@ -31,7 +30,7 @@ export function Label({
 export function FieldError({ id, children }: { id?: string; children?: ReactNode }) {
   if (!children) return null;
   return (
-    <p id={id} role="alert" className="mt-1 text-sm font-semibold text-[#ff8a8f]">
+    <p id={id} role="alert" className="mt-1 text-sm font-semibold text-flame">
       {children}
     </p>
   );
@@ -114,6 +113,7 @@ export function SelectField({
 }: FieldProps & SelectHTMLAttributes<HTMLSelectElement>) {
   const generated = useId();
   const inputId = id ?? generated;
+  const errorId = `${inputId}-error`;
   return (
     <div className={className}>
       {label && (
@@ -121,10 +121,16 @@ export function SelectField({
           {label}
         </Label>
       )}
-      <select id={inputId} className={cx(fieldClass, 'appearance-none pr-8')} {...props}>
+      <select
+        id={inputId}
+        className={cx(fieldClass, 'pr-8')}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        {...props}
+      >
         {children}
       </select>
-      <FieldError>{error}</FieldError>
+      <FieldError id={errorId}>{error}</FieldError>
     </div>
   );
 }

@@ -39,7 +39,7 @@ export interface UserInfo {
 }
 
 export interface ClientConfig {
-  authMode: 'entra' | 'dev';
+  authMode: 'guest' | 'entra' | 'dev';
   entra: { clientId: string; tenantId: string; scope: string } | null;
 }
 
