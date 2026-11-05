@@ -154,8 +154,10 @@ async function answer(player, question) {
           optionId: question.options[Math.floor(Math.random() * question.options.length)].id,
         }
       : { questionIndex: question.index, text: `Answer from ${player.nickname}` };
-  const started = performance.now();
   try {
+    // Like a phone: pick a multiple-choice option first, then submit it.
+    if (payload.optionId) await ack(player.socket, 'player:select', payload);
+    const started = performance.now();
     await ack(player.socket, 'player:answer', payload);
     if (!answerMs.has(question.index)) answerMs.set(question.index, []);
     answerMs.get(question.index).push(performance.now() - started);

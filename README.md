@@ -15,9 +15,9 @@ with a QR code or PIN, pick a nickname and a kart, and race to the podium by ans
 | ------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ |
 | ![Lobby with QR code](docs/screenshots/host-lobby.png) | ![Answer reveal](docs/screenshots/host-reveal.png) | ![Race-track standings](docs/screenshots/host-standings.png) |
 
-| Phone: question                                                                   | Phone: result                                                                          |
-| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| ![Phone question with pastel answer buttons](docs/screenshots/phone-question.png) | ![Correct answer and personal standing on a phone](docs/screenshots/phone-correct.png) |
+| Phone: question                                                                                          | Phone: result                                                                          |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| ![Phone question with a picked answer and the Submit answer button](docs/screenshots/phone-question.png) | ![Correct answer and personal standing on a phone](docs/screenshots/phone-correct.png) |
 
 These are screenshots of the running guest-mode app with demo quizzes and racers. The pictured PINs and
 local join addresses are examples, not active races.
@@ -37,12 +37,15 @@ local join addresses are examples, not active races.
 - **Join in seconds** – players scan the QR code or type the 6-digit PIN, choose a nickname and one of
   6 kart models × 8 colours. No account needed. Late joiners can hop in until the lead locks the race.
 - **The lead controls the pace** – start the race, end questions early, move on when ready. A question also
-  closes automatically when the timer runs out or every connected player has answered.
+  closes automatically when the timer runs out or every connected player has submitted an answer.
 - **Big-screen moments** – traffic-light countdown, live answer counter, answer bars with the correct answer
-  popping up, an answer wall for open questions (with nicknames), karts racing forward on the standings,
+  popping up, an anonymous answer wall for open questions, karts racing forward on the standings,
   and a podium with confetti plus the full hitlist at the end.
-- **Kahoot-style scoring** – a correct answer earns 500–1000 points depending on speed. Open questions are not
-  scored; they're shown for discussion.
+- **Pick, switch, submit** – players tap an answer and can switch until they press **Submit answer**. A pick
+  that isn't submitted still counts when the question closes.
+- **Kahoot-style scoring** – a correct answer earns 500–1000 points depending on how fast it was submitted; an
+  unsubmitted pick is scored at the moment the question closes. Open questions are not scored; they're shown
+  for discussion.
 - **Personal feedback on phones** – correct/wrong, points, current position and the gap to the kart ahead.
 - **Resilient** – phones that lose the connection or reload rejoin automatically with name, kart and score.
 - **Moderation** – profanity filter for nicknames and open answers, kick players, hide answers on the big screen.
@@ -298,8 +301,9 @@ CI never creates or changes an Entra ID app registration.
 - Players get an unguessable per-race token for rejoining; wrong PIN guesses are rate-limited per IP.
 - Every input is validated with zod; nicknames are unique per race; CSV exports are protected against formula
   injection; strict security headers (CSP, HSTS, …) are set; Cosmos DB key access is disabled in Azure.
-- Players see a privacy note when joining: nicknames, karts and answers appear on the big screen and are stored
-  with the race results for 90 days (configurable). Leads can delete results at any time.
+- Players see a privacy note when joining: nicknames and karts appear on the big screen, open answers appear
+  there without names, and nicknames and answers are stored with the race results for 90 days (configurable).
+  Leads can delete results at any time.
 
 ## Credits
 

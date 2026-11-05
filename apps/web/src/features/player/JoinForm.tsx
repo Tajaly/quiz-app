@@ -129,8 +129,8 @@ export function JoinForm({
             {busy ? 'Joining…' : 'Join the race'}
           </Button>
           <p className="text-xs leading-relaxed text-mist">
-            Your nickname, kart and answers appear on the host’s big screen and are kept with the race results
-            for up to 90 days.
+            Your nickname and kart appear on the host’s big screen; open answers are shown there without
+            names. The host’s race results keep your nickname and answers for up to 90 days.
           </p>
         </form>
       </Panel>

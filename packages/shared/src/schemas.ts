@@ -141,6 +141,11 @@ export const rejoinPayloadSchema = z.object({
   playerToken: z.string().min(16).max(128),
 });
 
+export const selectPayloadSchema = z.object({
+  questionIndex: z.number().int().min(0),
+  optionId: idSchema,
+});
+
 export const answerPayloadSchema = z
   .object({
     questionIndex: z.number().int().min(0),

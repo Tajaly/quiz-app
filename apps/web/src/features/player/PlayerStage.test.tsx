@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, type Mock } from 'vitest';
 import type { PlayerView } from '@power-quiz/shared';
 import { PlayerStage } from './PlayerStage';
 
@@ -28,45 +28,105 @@ const questionView: PlayerView = {
   countdown: null,
   timer: { remainingMs: 15_000, totalMs: 20_000 },
   myAnswer: null,
+  selectedOptionId: null,
   result: null,
   final: null,
 };
 
-function renderStage(view: PlayerView, onAnswer = vi.fn().mockResolvedValue({ ok: true })) {
-  render(
+function renderStage(
+  view: PlayerView,
+  {
+    onSelect = vi.fn().mockResolvedValue({ ok: true }),
+    onAnswer = vi.fn().mockResolvedValue({ ok: true }),
+  }: { onSelect?: Mock; onAnswer?: Mock } = {},
+) {
+  const ui = (current: PlayerView) => (
     <MemoryRouter>
-      <PlayerStage timed={{ view, receivedAt: performance.now() }} onAnswer={onAnswer} />
-    </MemoryRouter>,
+      <PlayerStage
+        timed={{ view: current, receivedAt: performance.now() }}
+        onSelect={onSelect}
+        onAnswer={onAnswer}
+      />
+    </MemoryRouter>
   );
-  return onAnswer;
+  const { rerender } = render(ui(view));
+  /** Simulates the next view pushed by the server. */
+  const update = (next: PlayerView) => rerender(ui(next));
+  return { onSelect, onAnswer, update };
 }
 
+const option = (name: string) => screen.getByRole('button', { name });
+const submitButton = () => screen.getByRole('button', { name: /Submit answer/ });
+
 describe('PlayerStage', () => {
-  it('sends the chosen option and locks the answer in', async () => {
-    const onAnswer = renderStage(questionView);
-    await userEvent.click(screen.getByRole('button', { name: 'Paris' }));
-    expect(onAnswer).toHaveBeenCalledWith({ questionIndex: 0, optionId: 'a' });
+  it('lets the player switch answers until they submit', async () => {
+    const { onSelect, onAnswer, update } = renderStage(questionView);
+    expect(submitButton()).toBeDisabled();
+
+    await userEvent.click(option('Paris'));
+    expect(onSelect).toHaveBeenLastCalledWith({ questionIndex: 0, optionId: 'a' });
+    await userEvent.click(option('Rome'));
+    expect(onSelect).toHaveBeenLastCalledWith({ questionIndex: 0, optionId: 'b' });
+    expect(option('Rome')).toHaveAttribute('aria-pressed', 'true');
+    expect(option('Paris')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Saving your pick…')).toBeInTheDocument();
+    update({ ...questionView, selectedOptionId: 'b' });
+    expect(screen.getByText(/You can switch until you submit/)).toBeInTheDocument();
+    expect(onAnswer).not.toHaveBeenCalled();
+
+    await userEvent.click(submitButton());
+    expect(onAnswer).toHaveBeenCalledWith({ questionIndex: 0, optionId: 'b' });
     expect(await screen.findByText(/Locked in/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Rome' })).toBeDisabled();
+    expect(option('Paris')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Submit answer/ })).not.toBeInTheDocument();
+  });
+
+  it('restores a pick that has not been submitted yet', async () => {
+    const { onAnswer } = renderStage({ ...questionView, selectedOptionId: 'b' });
+    expect(option('Rome')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/You can switch until you submit/)).toBeInTheDocument();
+    await userEvent.click(submitButton());
+    expect(onAnswer).toHaveBeenCalledWith({ questionIndex: 0, optionId: 'b' });
+  });
+
+  it('falls back to the confirmed pick when switching fails', async () => {
+    const onSelect = vi
+      .fn()
+      .mockResolvedValue({ ok: false, code: 'TOO_LATE', error: 'Too late – this question is closed.' });
+    renderStage({ ...questionView, selectedOptionId: 'a' }, { onSelect });
+    await userEvent.click(option('Rome'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too late');
+    expect(option('Paris')).toHaveAttribute('aria-pressed', 'true');
+    expect(option('Rome')).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('lets the player retry when the server rejects the answer', async () => {
     const onAnswer = vi
       .fn()
       .mockResolvedValue({ ok: false, code: 'INVALID', error: 'Pick one of the answers.' });
-    renderStage(questionView, onAnswer);
-    await userEvent.click(screen.getByRole('button', { name: 'Paris' }));
+    renderStage(questionView, { onAnswer });
+    await userEvent.click(option('Paris'));
+    await userEvent.click(submitButton());
     expect(await screen.findByRole('alert')).toHaveTextContent('Pick one of the answers.');
-    expect(screen.getByRole('button', { name: 'Rome' })).toBeEnabled();
+    expect(option('Rome')).toBeEnabled();
+    expect(submitButton()).toBeEnabled();
+  });
+
+  it('keeps an unsubmitted pick when time runs out', () => {
+    renderStage({ ...questionView, timer: { remainingMs: 0, totalMs: 20_000 }, selectedOptionId: 'a' });
+    expect(screen.getByText('Time’s up! Your pick counts.')).toBeInTheDocument();
+    expect(option('Paris')).toHaveAttribute('aria-pressed', 'true');
+    expect(option('Rome')).toBeDisabled();
+    expect(submitButton()).toBeDisabled();
   });
 
   it('submits open answers', async () => {
-    const onAnswer = renderStage({
+    const { onAnswer } = renderStage({
       ...questionView,
       question: { ...questionView.question!, type: 'open', options: null, text: 'Favourite colour?' },
     });
     await userEvent.type(screen.getByLabelText(/Your answer/), '  racing   red ');
-    await userEvent.click(screen.getByRole('button', { name: /Send answer/ }));
+    await userEvent.click(submitButton());
     expect(onAnswer).toHaveBeenCalledWith({ questionIndex: 0, text: 'racing red' });
   });
 

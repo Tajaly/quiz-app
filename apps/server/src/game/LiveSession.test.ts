@@ -207,10 +207,12 @@ describe('LiveSession', () => {
     expect(session.phase).toBe('reveal');
     const openReveal = session.hostView().reveal;
     expect(openReveal?.type).toBe('open');
-    expect(openReveal?.type === 'open' && openReveal.answers.map((a) => [a.nickname, a.text])).toEqual([
-      ['Alice', 'Blue'],
-      ['Bob', 'racing red'],
+    expect(openReveal?.type === 'open' && openReveal.answers).toEqual([
+      { playerId: alice, text: 'Blue', hidden: false },
+      { playerId: bob, text: 'racing red', hidden: false },
     ]);
+    // The answer wall is anonymous: no nicknames or karts reach the big screen.
+    expect(JSON.stringify(openReveal)).not.toMatch(/Alice|Bob|nickname|kart/);
     expect(session.playerView(cara)?.result).toMatchObject({ answered: false, correct: null, points: 0 });
 
     // Open questions skip the scoreboard; the last question leads to the podium.
@@ -273,6 +275,138 @@ describe('LiveSession', () => {
     session.endQuestion();
     expect(session.phase).toBe('reveal');
     expect(session.hostView().reveal).toMatchObject({ answeredCount: 0, playerCount: 1 });
+  });
+
+  describe('picking before submitting', () => {
+    it('lets players switch their pick and scores it when they submit', () => {
+      const { session, join, openQuestion } = setup();
+      const alice = join('Alice');
+      join('Bob');
+      session.start();
+      openQuestion();
+
+      vi.advanceTimersByTime(1000);
+      session.selectAnswer(alice, { questionIndex: 0, optionId: 'b' });
+      expect(session.playerView(alice)).toMatchObject({ selectedOptionId: 'b', myAnswer: null });
+      vi.advanceTimersByTime(1000);
+      session.selectAnswer(alice, { questionIndex: 0, optionId: 'a' });
+      expect(session.playerView(alice)?.selectedOptionId).toBe('a');
+      // A pick is not an answer yet: the counter and the question stay open.
+      expect(session.hostView().answeredCount).toBe(0);
+
+      vi.advanceTimersByTime(2000);
+      session.submitAnswer(alice, { questionIndex: 0, optionId: 'a' });
+      expect(session.playerView(alice)).toMatchObject({
+        selectedOptionId: null,
+        myAnswer: { optionId: 'a', text: null },
+      });
+      expect(session.hostView().answeredCount).toBe(1);
+      expectCode(() => session.selectAnswer(alice, { questionIndex: 0, optionId: 'b' }), 'ALREADY_ANSWERED');
+
+      session.endQuestion();
+      // Scored on the submit time (4 s of 20 s), not on when the answer was first picked.
+      expect(session.playerView(alice)?.result).toMatchObject({ correct: true, points: 900 });
+    });
+
+    it('scores unsubmitted picks at the time limit when the timer runs out', async () => {
+      const { session, sink, join, openQuestion } = setup();
+      const alice = join('Alice');
+      const bob = join('Bob');
+      const cara = join('Cara');
+      session.start();
+      openQuestion();
+
+      vi.advanceTimersByTime(1000);
+      session.selectAnswer(alice, { questionIndex: 0, optionId: 'a' });
+      session.selectAnswer(bob, { questionIndex: 0, optionId: 'b' });
+      vi.advanceTimersByTime(20_000 + ANSWER_GRACE_MS);
+
+      expect(session.phase).toBe('reveal');
+      expect(session.hostView().reveal).toMatchObject({
+        answeredCount: 2,
+        correctCount: 1,
+        distribution: [
+          { optionId: 'a', count: 1 },
+          { optionId: 'b', count: 1 },
+          { optionId: 'c', count: 0 },
+        ],
+      });
+      expect(session.playerView(alice)?.result).toMatchObject({
+        answered: true,
+        correct: true,
+        points: 500,
+        myAnswer: { optionId: 'a', text: null },
+      });
+      expect(session.playerView(bob)?.result).toMatchObject({ answered: true, correct: false, points: 0 });
+      expect(session.playerView(cara)?.result).toMatchObject({ answered: false, points: 0 });
+      expect(session.playerView(alice)?.selectedOptionId).toBeNull();
+      await session.flush();
+      expect(sink.answers[0]?.answers.map((answer) => [answer.optionId, answer.responseMs])).toEqual([
+        ['a', 20_000],
+        ['b', 20_000],
+      ]);
+    });
+
+    it('scores unsubmitted picks at the moment the host ends the question', () => {
+      const { session, join, openQuestion } = setup();
+      const alice = join('Alice');
+      join('Bob');
+      session.start();
+      openQuestion();
+      vi.advanceTimersByTime(2000);
+      session.selectAnswer(alice, { questionIndex: 0, optionId: 'a' });
+      vi.advanceTimersByTime(3000);
+      session.endQuestion();
+      expect(session.playerView(alice)?.result).toMatchObject({ correct: true, points: 875 });
+    });
+
+    it('only closes early once every connected player has submitted', () => {
+      const { session, join, openQuestion } = setup();
+      const alice = join('Alice');
+      const bob = join('Bob');
+      session.start();
+      openQuestion();
+      session.submitAnswer(alice, { questionIndex: 0, optionId: 'a' });
+      session.selectAnswer(bob, { questionIndex: 0, optionId: 'a' });
+      expect(session.phase).toBe('question');
+      session.submitAnswer(bob, { questionIndex: 0, optionId: 'b' });
+      expect(session.phase).toBe('reveal');
+      expect(session.playerView(bob)?.result).toMatchObject({ myAnswer: { optionId: 'b', text: null } });
+    });
+
+    it('rejects picks for closed or open questions and unknown options', () => {
+      const quiz = makeQuiz();
+      const { session, join, openQuestion } = setup(quiz);
+      const alice = join('Alice');
+      join('Bob');
+      expectCode(() => session.selectAnswer(alice, { questionIndex: 0, optionId: 'a' }), 'TOO_LATE');
+      expectCode(() => session.selectAnswer('nobody', { questionIndex: 0, optionId: 'a' }), 'NOT_FOUND');
+      session.start();
+      openQuestion();
+      expectCode(() => session.selectAnswer(alice, { questionIndex: 1, optionId: 'a' }), 'TOO_LATE');
+      expectCode(() => session.selectAnswer(alice, { questionIndex: 0, optionId: 'zzz' }), 'INVALID');
+      expect(session.playerView(alice)?.selectedOptionId).toBeNull();
+
+      const open = setup(makeQuiz({ questions: [quiz.questions[2]!] }));
+      const ann = open.join('Ann');
+      open.session.start();
+      open.openQuestion();
+      expectCode(() => open.session.selectAnswer(ann, { questionIndex: 0, optionId: 'a' }), 'INVALID');
+    });
+
+    it('drops the pick of a kicked player', () => {
+      const { session, join, openQuestion } = setup();
+      const alice = join('Alice');
+      const bob = join('Bob');
+      join('Cara');
+      session.start();
+      openQuestion();
+      session.selectAnswer(bob, { questionIndex: 0, optionId: 'a' });
+      session.kick(bob);
+      session.selectAnswer(alice, { questionIndex: 0, optionId: 'a' });
+      session.endQuestion();
+      expect(session.hostView().reveal).toMatchObject({ answeredCount: 1, playerCount: 2 });
+    });
   });
 
   it('rejects double answers, wrong question indexes and unknown options', () => {
@@ -357,17 +491,24 @@ describe('LiveSession', () => {
   it('persists an aborted race when the host ends it mid-question', async () => {
     const { session, sink, join, openQuestion } = setup();
     const alice = join('Alice');
-    join('Bob');
+    const bob = join('Bob');
     session.start();
     openQuestion();
     vi.advanceTimersByTime(1000);
     session.submitAnswer(alice, { questionIndex: 0, optionId: 'a' });
+    session.selectAnswer(bob, { questionIndex: 0, optionId: 'a' });
+    vi.advanceTimersByTime(3000);
     session.end();
     expect(session.phase).toBe('ended');
-    expect(session.hostView().final?.ranking[0]).toMatchObject({ nickname: 'Alice', score: 975 });
+    // Bob's unsubmitted pick counts as answered when the race ended (4 s of 20 s).
+    expect(session.hostView().final?.ranking.map((p) => [p.nickname, p.score])).toEqual([
+      ['Alice', 975],
+      ['Bob', 900],
+    ]);
     await session.flush();
     expect(sink.sessions.at(-1)?.status).toBe('aborted');
     expect(sink.answers).toHaveLength(1);
+    expect(sink.answers[0]?.answers).toHaveLength(2);
     expectCode(() => session.next(), 'ENDED');
   });
 
@@ -389,6 +530,9 @@ describe('LiveSession', () => {
     join('Bob');
     session.start();
     openQuestion();
+    scopes.length = 0;
+    session.selectAnswer(alice, { questionIndex: 0, optionId: 'b' });
+    expect(scopes).toEqual([{ host: false, players: [alice] }]);
     scopes.length = 0;
     session.submitAnswer(alice, { questionIndex: 0, optionId: 'a' });
     expect(scopes).toEqual([{ host: true, players: [alice] }]);

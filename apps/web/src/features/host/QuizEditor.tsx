@@ -155,7 +155,7 @@ function QuestionCard({
             Answers – tap <Icon name="check" size={1.4} className="inline" /> to mark the correct one. Empty
             answers are skipped.
           </p>
-          <div className="grid gap-2 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {question.options.map((option, optionIndex) => {
               const style = answerStyle(optionIndex);
               const correct = option.id === question.correctOptionId;
@@ -248,7 +248,7 @@ function QuestionCard({
       ) : (
         <p className="mt-4 text-mist">
           Players type a short answer (up to {LIMITS.openAnswerMax} characters). Open questions aren’t scored
-          – the answers appear with nicknames on the big screen for discussion.
+          – the answers appear anonymously on the big screen for discussion.
         </p>
       )}
     </Panel>

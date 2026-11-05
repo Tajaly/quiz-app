@@ -151,6 +151,7 @@ test('all four pastel answers retain readable text on a small phone', async ({ b
   await expectNoPageOverflow(player);
   await snap(player, 'mobile-four-answers');
   await player.getByRole('button', { name: 'Flag', exact: true }).click();
+  await player.getByRole('button', { name: 'Submit answer' }).click();
   await expect(player.getByText('Correct!', { exact: true })).toBeVisible();
   await player.context().close();
   await host.context().close();

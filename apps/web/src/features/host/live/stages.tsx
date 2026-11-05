@@ -227,33 +227,25 @@ function OpenAnswerWall({
           {reveal.answers.map((answer, index) => (
             <li
               key={answer.playerId}
-              className="group game-panel animate-pop p-4 text-ink"
+              className="group game-panel flex animate-pop items-start gap-2 p-4 text-ink"
               style={{ animationDelay: `${Math.min(index, 24) * 70}ms` }}
             >
-              <div className="flex items-center gap-2">
-                <Kart kart={answer.kart} scale={2} title={false} />
-                <span className="flex-1 truncate text-lg font-bold">{answer.nickname}</span>
-                <button
-                  type="button"
-                  onClick={() => onHide(answer.playerId, !answer.hidden)}
-                  aria-label={
-                    answer.hidden
-                      ? `Show answer from ${answer.nickname}`
-                      : `Hide answer from ${answer.nickname}`
-                  }
-                  title={answer.hidden ? 'Show answer' : 'Hide answer'}
-                  className="rounded-lg p-2 text-mist transition-colors hover:bg-sky-soft hover:text-ink"
-                >
-                  <Icon name={answer.hidden ? 'eye' : 'eyeOff'} size={2} />
-                </button>
-              </div>
-              <p className="mt-2 break-words text-3xl font-bold leading-snug">
+              <p className="min-w-0 flex-1 break-words text-3xl font-bold leading-snug">
                 {answer.hidden ? (
                   <span className="text-lg italic text-mist">Hidden by host</span>
                 ) : (
                   answer.text
                 )}
               </p>
+              <button
+                type="button"
+                onClick={() => onHide(answer.playerId, !answer.hidden)}
+                aria-label={answer.hidden ? `Show answer “${answer.text}”` : `Hide answer “${answer.text}”`}
+                title={answer.hidden ? 'Show answer' : 'Hide answer'}
+                className="shrink-0 rounded-lg p-2 text-mist transition-colors hover:bg-sky-soft hover:text-ink"
+              >
+                <Icon name={answer.hidden ? 'eye' : 'eyeOff'} size={2} />
+              </button>
             </li>
           ))}
         </ul>
