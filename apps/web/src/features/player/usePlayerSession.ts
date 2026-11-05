@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AckResponse, AnswerPayload, Kart, PlayerCredentials, PlayerView } from '@power-quiz/shared';
+import type {
+  AckResponse,
+  AnswerPayload,
+  Kart,
+  PlayerCredentials,
+  PlayerView,
+  SelectPayload,
+} from '@power-quiz/shared';
 import { createSocket, emitAck, type QuizSocket, type Timed } from '../../lib/socket';
 import { clearCredentials, loadCredentials, saveCredentials, saveLastPlayer } from '../../lib/storage';
 
@@ -89,11 +96,17 @@ export function usePlayerSession(pin: string) {
     [pin],
   );
 
+  const select = useCallback(async (payload: SelectPayload): Promise<AckResponse> => {
+    const socket = socketRef.current;
+    if (!socket) return offline;
+    return emitAck(socket, 'player:select', payload);
+  }, []);
+
   const answer = useCallback(async (payload: AnswerPayload): Promise<AckResponse> => {
     const socket = socketRef.current;
     if (!socket) return offline;
     return emitAck(socket, 'player:answer', payload);
   }, []);
 
-  return { status, timed, online, join, answer };
+  return { status, timed, online, join, select, answer };
 }

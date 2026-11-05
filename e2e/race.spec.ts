@@ -42,14 +42,30 @@ test('a host builds a quiz and runs a full race with three phones', async ({ bro
   for (const phone of [ann, ben, cat])
     await expect(phone.getByRole('button', { name: 'Paris' })).toBeVisible();
   await snap(host, '06-host-question');
-  await snap(ann, '07-phone-question');
+
+  // Players can switch their pick until they submit it.
+  await ann.getByRole('button', { name: 'Rome' }).click();
   await ann.getByRole('button', { name: 'Paris' }).click();
+  await expect(ann.getByRole('button', { name: 'Paris' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(ann.getByRole('button', { name: 'Rome' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(ann.getByText(/You can switch until you submit/)).toBeVisible();
+  await snap(ann, '07-phone-question');
+  await ann.getByRole('button', { name: 'Submit answer' }).click();
+  await expect(ann.getByText(/Locked in/)).toBeVisible();
   await ben.getByRole('button', { name: 'Rome' }).click();
+  await ben.getByRole('button', { name: 'Submit answer' }).click();
+  await expect(host.getByTestId('answered-count')).toHaveText('2');
+
+  // Cat picks Paris but never submits: the pick still counts when the question closes.
   await cat.getByRole('button', { name: 'Paris' }).click();
+  await expect(cat.getByText(/You can switch until you submit/)).toBeVisible();
+  await expect(host.getByTestId('primary-action')).toHaveText(/End question/);
+  await host.getByTestId('primary-action').click();
 
   await expect(host.locator('[data-correct="true"]')).toContainText('Paris');
   await expect(ann.getByText('Correct!')).toBeVisible();
   await expect(ben.getByText('Not this time')).toBeVisible();
+  await expect(cat.getByText('Correct!')).toBeVisible();
   await snap(host, '08-host-reveal');
   await snap(ann, '09-phone-correct');
   await snap(ben, '10-phone-wrong');
@@ -58,14 +74,17 @@ test('a host builds a quiz and runs a full race with three phones', async ({ bro
   await expect(host.getByTestId('standing')).toHaveCount(3);
   await snap(host, '11-host-standings');
 
-  // Question 2 – open answers appear with nicknames.
+  // Question 2 – open answers appear on the big screen without nicknames.
   await host.getByTestId('primary-action').click();
   const answers = ['Racing red', 'Electric blue', 'Lime green'];
   for (const [index, phone] of [ann, ben, cat].entries()) {
     await phone.getByLabel('Your answer').fill(answers[index] ?? '');
-    await phone.getByRole('button', { name: 'Send answer' }).click();
+    await phone.getByRole('button', { name: 'Submit answer' }).click();
   }
   await expect(host.getByText('Electric blue')).toBeVisible();
+  for (const nickname of ['Ann', 'Ben', 'Cat']) {
+    await expect(host.getByText(nickname, { exact: true })).toHaveCount(0);
+  }
   await snap(host, '12-host-open-answers');
 
   // Final podium and hitlist.
@@ -96,6 +115,7 @@ test('a player who reloads mid-race keeps their name, kart and score', async ({ 
   await expect(host.getByTestId('racer-count')).toHaveText('1 racer');
   await host.getByTestId('primary-action').click();
   await zoe.getByRole('button', { name: 'Bolt' }).click();
+  await zoe.getByRole('button', { name: 'Submit answer' }).click();
   await expect(zoe.getByText('Correct!')).toBeVisible();
 
   await zoe.reload();

@@ -63,7 +63,7 @@ function PlayerGame({ pin }: { pin: string }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <PlayerHeader view={session.timed.view} online={session.online} />
-      <PlayerStage timed={session.timed} onAnswer={session.answer} />
+      <PlayerStage timed={session.timed} onSelect={session.select} onAnswer={session.answer} />
     </div>
   );
 }

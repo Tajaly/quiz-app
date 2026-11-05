@@ -248,7 +248,7 @@ function QuestionCard({
       ) : (
         <p className="mt-4 text-mist">
           Players type a short answer (up to {LIMITS.openAnswerMax} characters). Open questions aren’t scored
-          – the answers appear with nicknames on the big screen for discussion.
+          – the answers appear anonymously on the big screen for discussion.
         </p>
       )}
     </Panel>

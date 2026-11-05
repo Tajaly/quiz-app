@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import {
   LIMITS,
@@ -6,6 +6,7 @@ import {
   type AnswerPayload,
   type PlayerView,
   type QuestionPublic,
+  type SelectPayload,
 } from '@power-quiz/shared';
 import { answerStyle } from '../../design/answers';
 import { Button } from '../../design/Button';
@@ -18,6 +19,7 @@ import { cx } from '../../lib/cx';
 import { formatPoints, ordinal } from '../../lib/format';
 import { useRemainingMs, type Timed } from '../../lib/socket';
 
+type Select = (payload: SelectPayload) => Promise<AckResponse>;
 type Answer = (payload: AnswerPayload) => Promise<AckResponse>;
 
 export function PlayerHeader({ view, online }: { view: PlayerView; online: boolean }) {
@@ -130,11 +132,22 @@ function OptionButton({
   );
 }
 
-function Question({ timed, onAnswer }: { timed: Timed<PlayerView>; onAnswer: Answer }) {
+function Question({
+  timed,
+  onSelect,
+  onAnswer,
+}: {
+  timed: Timed<PlayerView>;
+  onSelect: Select;
+  onAnswer: Answer;
+}) {
   const { view } = timed;
   const question = view.question;
   const remaining = useRemainingMs(view.timer, timed.receivedAt);
   const [pending, setPending] = useState<{ index: number; optionId?: string; text?: string } | null>(null);
+  // This phone's latest pick wins over the server's copy while a switch is still on its way.
+  const [picked, setPicked] = useState<string | null>(null);
+  const pickRequest = useRef(0);
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -143,13 +156,31 @@ function Question({ timed, onAnswer }: { timed: Timed<PlayerView>; onAnswer: Ans
   if (questionIndex !== view.questionIndex) {
     setQuestionIndex(view.questionIndex);
     setPending(null);
+    setPicked(null);
     setText('');
     setError(null);
   }
 
   if (!question) return null;
   const submitted = view.myAnswer ?? (pending?.index === question.index ? pending : null);
+  const selection = submitted ? (submitted.optionId ?? null) : (picked ?? view.selectedOptionId);
+  // The server keeps the pick so it still counts if time runs out before the player submits.
+  const pickSaved = picked === null || picked === view.selectedOptionId;
   const timeUp = remaining <= 0;
+  const locked = !!submitted || timeUp;
+
+  const pick = async (optionId: string) => {
+    if (locked || optionId === selection) return;
+    const request = ++pickRequest.current;
+    setPicked(optionId);
+    setError(null);
+    const response = await onSelect({ questionIndex: question.index, optionId });
+    // Only the latest pick decides; on failure fall back to the pick the server confirmed.
+    if (!response.ok && request === pickRequest.current) {
+      setPicked(null);
+      setError(response.error);
+    }
+  };
 
   const send = async (payload: AnswerPayload) => {
     setPending({ index: payload.questionIndex, optionId: payload.optionId, text: payload.text });
@@ -178,17 +209,31 @@ function Question({ timed, onAnswer }: { timed: Timed<PlayerView>; onAnswer: Ans
       <h2 className="text-2xl font-bold leading-snug">{question.text}</h2>
 
       {question.type === 'mc' ? (
-        <div className="grid gap-2">
-          {question.options?.map((option, index) => (
-            <OptionButton
-              key={option.id}
-              question={question}
-              index={index}
-              selected={submitted?.optionId === option.id}
-              disabled={!!submitted || timeUp}
-              onPick={() => void send({ questionIndex: question.index, optionId: option.id })}
-            />
-          ))}
+        <div className="flex flex-col gap-3">
+          <div className="grid gap-2">
+            {question.options?.map((option, index) => (
+              <OptionButton
+                key={option.id}
+                question={question}
+                index={index}
+                selected={selection === option.id}
+                disabled={locked}
+                onPick={() => void pick(option.id)}
+              />
+            ))}
+          </div>
+          {!submitted && (
+            <Button
+              size="lg"
+              icon="play"
+              disabled={!selection || timeUp}
+              onClick={() => {
+                if (selection) void send({ questionIndex: question.index, optionId: selection });
+              }}
+            >
+              Submit answer
+            </Button>
+          )}
         </div>
       ) : submitted ? (
         <div className="px-frame m-1 bg-white p-4 text-xl font-bold text-ink">“{submitted.text}”</div>
@@ -205,7 +250,7 @@ function Question({ timed, onAnswer }: { timed: Timed<PlayerView>; onAnswer: Ans
             enterKeyHint="send"
           />
           <Button type="submit" size="lg" icon="play" disabled={timeUp}>
-            Send answer
+            Submit answer
           </Button>
         </form>
       )}
@@ -215,8 +260,20 @@ function Question({ timed, onAnswer }: { timed: Timed<PlayerView>; onAnswer: Ans
         <p role="status" className="animate-pop text-center text-base font-bold text-leaf">
           Locked in! Waiting for the others…
         </p>
+      ) : timeUp ? (
+        <p className="text-center font-pixel text-sm text-flame">
+          {selection ? 'Time’s up! Your pick counts.' : 'Time’s up!'}
+        </p>
       ) : (
-        timeUp && <p className="text-center font-pixel text-sm text-flame">Time’s up!</p>
+        question.type === 'mc' && (
+          <p className="text-center text-sm text-mist">
+            {!selection
+              ? 'Tap an answer, then submit it.'
+              : pickSaved
+                ? 'You can switch until you submit. If time runs out, your pick counts.'
+                : 'Saving your pick…'}
+          </p>
+        )
       )}
     </Screen>
   );
@@ -342,7 +399,15 @@ function Final({ view }: { view: PlayerView }) {
   );
 }
 
-export function PlayerStage({ timed, onAnswer }: { timed: Timed<PlayerView>; onAnswer: Answer }) {
+export function PlayerStage({
+  timed,
+  onSelect,
+  onAnswer,
+}: {
+  timed: Timed<PlayerView>;
+  onSelect: Select;
+  onAnswer: Answer;
+}) {
   const { view } = timed;
   switch (view.phase) {
     case 'lobby':
@@ -350,7 +415,7 @@ export function PlayerStage({ timed, onAnswer }: { timed: Timed<PlayerView>; onA
     case 'countdown':
       return <Countdown timed={timed} />;
     case 'question':
-      return <Question timed={timed} onAnswer={onAnswer} />;
+      return <Question timed={timed} onSelect={onSelect} onAnswer={onAnswer} />;
     case 'reveal':
     case 'scoreboard':
       return <Result view={view} />;

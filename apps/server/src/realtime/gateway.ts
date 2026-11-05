@@ -7,6 +7,7 @@ import {
   joinPayloadSchema,
   kickSchema,
   rejoinPayloadSchema,
+  selectPayloadSchema,
   setLockedSchema,
   type AckResponse,
   type ClientToServerEvents,
@@ -116,6 +117,14 @@ export function attachRealtime(io: QuizIoServer, deps: RealtimeDeps): void {
     if (session.ownerId !== socket.data.user?.id)
       throw new SessionError('FORBIDDEN', 'This is not your race.');
     return session;
+  }
+
+  function playerSession(socket: QuizSocket): { session: LiveSession; playerId: string } {
+    const { sessionId, playerId } = socket.data;
+    if (!sessionId || !playerId) throw new SessionError('NOT_ATTACHED', 'Join the race first.');
+    const session = manager.get(sessionId);
+    if (!session) throw new SessionError('ENDED', 'This race is over.');
+    return { session, playerId };
   }
 
   function bindPlayer(socket: QuizSocket, session: LiveSession, playerId: string): void {
@@ -230,12 +239,15 @@ export function attachRealtime(io: QuizIoServer, deps: RealtimeDeps): void {
         };
       }),
     );
+    socket.on('player:select', (payload, ack) =>
+      respond(ack, () => {
+        const { session, playerId } = playerSession(socket);
+        session.selectAnswer(playerId, selectPayloadSchema.parse(payload));
+      }),
+    );
     socket.on('player:answer', (payload, ack) =>
       respond(ack, () => {
-        const { sessionId, playerId } = socket.data;
-        if (!sessionId || !playerId) throw new SessionError('NOT_ATTACHED', 'Join the race first.');
-        const session = manager.get(sessionId);
-        if (!session) throw new SessionError('ENDED', 'This race is over.');
+        const { session, playerId } = playerSession(socket);
         session.submitAnswer(playerId, answerPayloadSchema.parse(payload));
       }),
     );

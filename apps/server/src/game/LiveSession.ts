@@ -28,6 +28,7 @@ import {
   type RankedPlayer,
   type RevealData,
   type ScoreboardData,
+  type SelectPayload,
   type SessionPhase,
   type SessionRecord,
   type SessionStatus,
@@ -106,6 +107,8 @@ interface QuestionRun {
   openedAt: number;
   deadline: number;
   answers: Map<string, AnswerState>;
+  /** Multiple-choice picks (player id → option id) that have not been submitted yet. */
+  selections: Map<string, string>;
   /** Standings before this question, used to animate the scoreboard. */
   before: Map<string, Standing>;
   closed: boolean;
@@ -242,7 +245,10 @@ export class LiveSession {
     if (!player || player.kicked) throw new SessionError('NOT_FOUND', 'Player not found.');
     player.kicked = true;
     player.connected = false;
-    if (this.current && !this.current.closed) this.current.answers.delete(playerId);
+    if (this.current && !this.current.closed) {
+      this.current.answers.delete(playerId);
+      this.current.selections.delete(playerId);
+    }
     this.rankingCache = null;
     this.notify({ host: true, players: 'all' });
     this.maybeAutoClose();
@@ -316,41 +322,22 @@ export class LiveSession {
     this.notify({ host: true, players: 'all' });
   }
 
+  /** Picks (or switches to) a multiple-choice option. It only counts once submitted or when the question closes. */
+  selectAnswer(playerId: string, payload: SelectPayload): void {
+    const run = this.acceptingRun(playerId, payload.questionIndex);
+    if (run.answers.has(playerId)) throw new SessionError('ALREADY_ANSWERED', 'You already answered.');
+    run.selections.set(playerId, this.validOption(run, payload.optionId));
+    this.notify({ host: false, players: [playerId] });
+  }
+
   submitAnswer(playerId: string, payload: AnswerPayload): void {
-    const player = this.players.get(playerId);
-    if (!player) throw new SessionError('NOT_FOUND', 'Join the race first.');
-    if (player.kicked) throw new SessionError('KICKED', 'You were removed from this race by the host.');
-    const run = this.current;
-    const now = Date.now();
-    if (
-      this.phaseValue !== 'question' ||
-      !run ||
-      run.closed ||
-      payload.questionIndex !== run.index ||
-      now > run.deadline + ANSWER_GRACE_MS
-    ) {
-      throw new SessionError('TOO_LATE', 'Too late – this question is closed.');
-    }
+    const run = this.acceptingRun(playerId, payload.questionIndex);
     if (run.answers.has(playerId)) throw new SessionError('ALREADY_ANSWERED', 'You already answered.');
 
-    const responseMs = Math.min(Math.max(now - run.openedAt, 0), run.timeLimitMs);
-    const question = run.question;
+    const responseMs = this.elapsedMs(run);
     let answer: AnswerState;
-    if (question.type === 'mc') {
-      const optionId = payload.optionId;
-      if (!optionId || !question.options.some((option) => option.id === optionId)) {
-        throw new SessionError('INVALID', 'Pick one of the answers.');
-      }
-      const correct = optionId === question.correctOptionId;
-      answer = {
-        playerId,
-        optionId,
-        text: null,
-        responseMs,
-        correct,
-        points: calculatePoints(correct, responseMs, run.timeLimitMs),
-        hidden: false,
-      };
+    if (run.question.type === 'mc') {
+      answer = this.optionAnswer(run, playerId, this.validOption(run, payload.optionId), responseMs);
     } else {
       const parsed = openAnswerSchema.safeParse(payload.text ?? '');
       if (!parsed.success)
@@ -366,6 +353,7 @@ export class LiveSession {
       };
     }
     run.answers.set(playerId, answer);
+    run.selections.delete(playerId);
     this.notify({ host: true, players: [playerId] });
     this.maybeAutoClose();
   }
@@ -415,12 +403,63 @@ export class LiveSession {
       openedAt: now,
       deadline: now + timeLimitMs,
       answers: new Map(),
+      selections: new Map(),
       before: this.pendingBefore ?? this.standings(),
       closed: false,
     };
     this.phaseValue = 'question';
     this.schedule(timeLimitMs + ANSWER_GRACE_MS, () => this.closeQuestion());
     this.notify({ host: true, players: 'all' });
+  }
+
+  /** The open question a player may still pick or answer, or a reason why they can't. */
+  private acceptingRun(playerId: string, questionIndex: number): QuestionRun {
+    const player = this.players.get(playerId);
+    if (!player) throw new SessionError('NOT_FOUND', 'Join the race first.');
+    if (player.kicked) throw new SessionError('KICKED', 'You were removed from this race by the host.');
+    const run = this.current;
+    if (
+      this.phaseValue !== 'question' ||
+      !run ||
+      run.closed ||
+      questionIndex !== run.index ||
+      Date.now() > run.deadline + ANSWER_GRACE_MS
+    ) {
+      throw new SessionError('TOO_LATE', 'Too late – this question is closed.');
+    }
+    return run;
+  }
+
+  private validOption(run: QuestionRun, optionId: string | undefined): string {
+    const question = run.question;
+    if (question.type !== 'mc' || !optionId || !question.options.some((option) => option.id === optionId)) {
+      throw new SessionError('INVALID', 'Pick one of the answers.');
+    }
+    return optionId;
+  }
+
+  private optionAnswer(
+    run: QuestionRun,
+    playerId: string,
+    optionId: string,
+    responseMs: number,
+  ): AnswerState {
+    const question = run.question;
+    const correct = question.type === 'mc' && optionId === question.correctOptionId;
+    return {
+      playerId,
+      optionId,
+      text: null,
+      responseMs,
+      correct,
+      points: calculatePoints(correct, responseMs, run.timeLimitMs),
+      hidden: false,
+    };
+  }
+
+  /** Response time on the server's clock, capped at the time limit. */
+  private elapsedMs(run: QuestionRun): number {
+    return Math.min(Math.max(Date.now() - run.openedAt, 0), run.timeLimitMs);
   }
 
   private maybeAutoClose(): void {
@@ -445,6 +484,7 @@ export class LiveSession {
 
   private applyScores(run: QuestionRun): void {
     run.closed = true;
+    this.lockInSelections(run);
     for (const answer of run.answers.values()) {
       const player = this.players.get(answer.playerId);
       if (!player || player.kicked || !answer.correct) continue;
@@ -454,6 +494,17 @@ export class LiveSession {
     }
     this.runs.push(run);
     this.rankingCache = null;
+  }
+
+  /** Picks that were never submitted count as answers given when the question closed. */
+  private lockInSelections(run: QuestionRun): void {
+    const responseMs = this.elapsedMs(run);
+    for (const [playerId, optionId] of run.selections) {
+      const player = this.players.get(playerId);
+      if (!player || player.kicked || run.answers.has(playerId)) continue;
+      run.answers.set(playerId, this.optionAnswer(run, playerId, optionId, responseMs));
+    }
+    run.selections.clear();
   }
 
   private advance(): void {
@@ -504,6 +555,8 @@ export class LiveSession {
     const ranks = this.rankMap();
     const run = this.current && this.current.index === this.questionIndex ? this.current : null;
     const answer = run && QUESTION_PHASES.has(this.phaseValue) ? run.answers.get(playerId) : undefined;
+    const selectedOptionId =
+      run && this.phaseValue === 'question' && !run.closed ? (run.selections.get(playerId) ?? null) : null;
     const revealing = (this.phaseValue === 'reveal' || this.phaseValue === 'scoreboard') && !!run?.closed;
     return {
       sessionId: this.id,
@@ -524,6 +577,7 @@ export class LiveSession {
       countdown: this.countdownInfo(),
       timer: this.timerInfo(),
       myAnswer: answer ? { optionId: answer.optionId, text: answer.text } : null,
+      selectedOptionId,
       result: revealing && run ? this.playerResult(run, player) : null,
       final: this.hasFinalStandings() ? this.playerFinal(player) : null,
     };
@@ -667,16 +721,7 @@ export class LiveSession {
       type: 'open',
       answers: answers
         .sort((a, b) => a.responseMs - b.responseMs)
-        .map((answer) => {
-          const player = this.players.get(answer.playerId);
-          return {
-            playerId: answer.playerId,
-            nickname: player?.nickname ?? '?',
-            kart: player?.kart ?? { model: 'classic', color: 'red' },
-            text: answer.text ?? '',
-            hidden: answer.hidden,
-          };
-        }),
+        .map((answer) => ({ playerId: answer.playerId, text: answer.text ?? '', hidden: answer.hidden })),
       answeredCount: answers.length,
       playerCount,
     };

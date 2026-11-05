@@ -18,6 +18,11 @@ export interface RejoinPayload {
   playerToken: string;
 }
 
+export interface SelectPayload {
+  questionIndex: number;
+  optionId: string;
+}
+
 export interface AnswerPayload {
   questionIndex: number;
   optionId?: string;
@@ -38,6 +43,9 @@ export interface ClientToServerEvents {
   'host:end': (ack: AckCallback) => void;
   'player:join': (payload: JoinPayload, ack: AckCallback<{ credentials: PlayerCredentials }>) => void;
   'player:rejoin': (payload: RejoinPayload, ack: AckCallback<{ credentials: PlayerCredentials }>) => void;
+  /** Picks or switches a multiple-choice option without submitting it. */
+  'player:select': (payload: SelectPayload, ack: AckCallback) => void;
+  /** Submits the final answer. Picks that are never submitted count when the question closes. */
   'player:answer': (payload: AnswerPayload, ack: AckCallback) => void;
 }
 

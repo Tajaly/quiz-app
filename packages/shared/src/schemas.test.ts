@@ -7,6 +7,7 @@ import {
   openAnswerSchema,
   pinSchema,
   quizInputSchema,
+  selectPayloadSchema,
 } from './schemas';
 
 const mcQuestion = {
@@ -129,6 +130,13 @@ describe('payloads', () => {
     expect(answerPayloadSchema.safeParse({ questionIndex: 0, optionId: 'a', text: 'hi' }).success).toBe(
       false,
     );
+  });
+
+  it('only accepts an option when a player picks an answer', () => {
+    expect(selectPayloadSchema.safeParse({ questionIndex: 0, optionId: 'a' }).success).toBe(true);
+    expect(selectPayloadSchema.safeParse({ questionIndex: 0 }).success).toBe(false);
+    expect(selectPayloadSchema.safeParse({ questionIndex: -1, optionId: 'a' }).success).toBe(false);
+    expect(selectPayloadSchema.safeParse({ questionIndex: 0, optionId: 'not valid!' }).success).toBe(false);
   });
 
   it('normalises open answers and enforces their length', () => {

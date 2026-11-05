@@ -164,6 +164,42 @@ describe('realtime gateway', () => {
     expect(scoreboard.scoreboard?.entries.map((entry) => entry.nickname)).toEqual(['Ann', 'Ben']);
   });
 
+  it('lets players switch picks, restores them on rejoin and counts them when the question closes', async () => {
+    const session = server.manager.create('dev-alice', makeQuiz());
+    const screen = await host();
+    await screen.emit('host:attach', { sessionId: session.id });
+    const phone = await player();
+    const credentials = await join(phone, session.pin, 'Ann');
+    expect(await screen.emit('host:start')).toEqual({ ok: true });
+    await phone.waitFor((view) => view.phase === 'question');
+
+    expect(await phone.emit('player:select', { questionIndex: 0, optionId: 'b' })).toEqual({ ok: true });
+    expect(await phone.emit('player:select', { questionIndex: 0, optionId: 'a' })).toEqual({ ok: true });
+    expect(await phone.emit('player:select', { questionIndex: 0 })).toMatchObject({
+      ok: false,
+      code: 'INVALID',
+    });
+    expect((await phone.waitFor((view) => view.selectedOptionId === 'a')).myAnswer).toBeNull();
+    expect(session.hostView().answeredCount).toBe(0);
+
+    // A reloaded phone gets its pick back.
+    phone.socket.disconnect();
+    const again = await player();
+    await again.emit('player:rejoin', {
+      sessionId: credentials.sessionId,
+      playerToken: credentials.playerToken,
+    });
+    expect((await again.waitFor((view) => view.phase === 'question')).selectedOptionId).toBe('a');
+
+    expect(await screen.emit('host:endQuestion')).toEqual({ ok: true });
+    const reveal = await again.waitFor((view) => view.phase === 'reveal');
+    expect(reveal.result).toMatchObject({ answered: true, correct: true, myAnswer: { optionId: 'a' } });
+    expect(await again.emit('player:select', { questionIndex: 0, optionId: 'b' })).toMatchObject({
+      ok: false,
+      code: 'TOO_LATE',
+    });
+  });
+
   it('restores a player after a dropped connection', async () => {
     const session = server.manager.create('dev-alice', makeQuiz());
     const screen = await host();
@@ -240,6 +276,9 @@ describe('realtime gateway', () => {
     const session = server.manager.create('dev-alice', makeQuiz());
     const phone = await player();
     expect(await phone.emit('player:answer', { questionIndex: 0, optionId: 'a' })).toMatchObject({
+      code: 'NOT_ATTACHED',
+    });
+    expect(await phone.emit('player:select', { questionIndex: 0, optionId: 'a' })).toMatchObject({
       code: 'NOT_ATTACHED',
     });
     expect(

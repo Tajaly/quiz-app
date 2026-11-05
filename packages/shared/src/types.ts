@@ -88,10 +88,9 @@ export interface McReveal {
   avgResponseMs: number | null;
 }
 
+/** Open answers are anonymous on the big screen; the player id is only used to hide an answer. */
 export interface OpenAnswerPublic {
   playerId: string;
-  nickname: string;
-  kart: Kart;
   text: string;
   hidden: boolean;
 }
@@ -198,6 +197,8 @@ export interface PlayerView {
   countdown: TimerInfo | null;
   timer: TimerInfo | null;
   myAnswer: PlayerAnswer | null;
+  /** Multiple-choice option picked but not submitted yet; it is scored when the question closes. */
+  selectedOptionId: string | null;
   result: PlayerResult | null;
   final: PlayerFinal | null;
 }
