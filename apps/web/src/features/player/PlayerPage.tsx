@@ -3,6 +3,7 @@ import { pinSchema } from '@power-quiz/shared';
 import { Panel } from '../../design/Panel';
 import { RaceScene } from '../../design/Scenery';
 import { Logo, Spinner } from '../../design/Widgets';
+import { ThemeSelect } from '../../design/ThemeSelect';
 import { PinForm } from '../landing/Landing';
 import { MessageScreen } from '../landing/NotFound';
 import { JoinForm } from './JoinForm';
@@ -15,6 +16,9 @@ function PinEntry({ error }: { error?: string }) {
       <Link to="/" className="self-center" aria-label="Power Quiz home">
         <Logo />
       </Link>
+      <div className="self-end">
+        <ThemeSelect />
+      </div>
       <Panel title="Join a race">
         <PinForm initialError={error} />
       </Panel>

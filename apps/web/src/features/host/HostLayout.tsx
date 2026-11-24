@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { Button } from '../../design/Button';
 import { Notice } from '../../design/Panel';
 import { Logo, Spinner } from '../../design/Widgets';
+import { ThemeSelect } from '../../design/ThemeSelect';
 import { cx } from '../../lib/cx';
 import { RequireHost } from './RequireHost';
 
@@ -31,6 +32,7 @@ function HostChrome() {
             </NavLink>
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <ThemeSelect />
             <span className="hidden text-sm text-mist sm:inline">{auth.user?.name}</span>
             {auth.mode === 'guest' ? (
               <Link to="/" className={navClass({ isActive: false })}>

@@ -7,16 +7,16 @@ export function RaceScene({ className }: { className?: string }) {
   return (
     <div className={cx('race-scene', className)} aria-hidden="true">
       <svg viewBox="0 0 720 320" fill="none" focusable="false">
-        <circle cx="628" cy="40" r="23" fill="#ffd45b" />
-        <g fill="white">
+        <circle cx="628" cy="40" r="23" fill="light-dark(#ffd45b, #dae7f4)" />
+        <g fill="light-dark(white, #466077)">
           <path d="M49 58a18 18 0 0 1 0-36 25 25 0 0 1 47-5 19 19 0 0 1 27 17h9a12 12 0 0 1 0 24Z" />
           <path d="M365 52a12 12 0 0 1 0-24 19 19 0 0 1 35-8 15 15 0 0 1 23 14h10a9 9 0 0 1 0 18Z" />
           <path d="M627 95a13 13 0 0 1 0-26 20 20 0 0 1 37-6 15 15 0 0 1 23 14 9 9 0 0 1 0 18Z" />
         </g>
-        <rect x="57" y="71" width="606" height="233" rx="116" fill="#c2e8a7" />
+        <rect x="57" y="71" width="606" height="233" rx="116" fill="light-dark(#c2e8a7, #304f38)" />
         <path d={CIRCUIT} stroke="white" strokeWidth="74" />
         <path d={CIRCUIT} stroke="#ed777b" strokeWidth="74" strokeDasharray="15 15" />
-        <path d={CIRCUIT} stroke="#7893ab" strokeWidth="58" />
+        <path d={CIRCUIT} stroke="var(--color-tarmac)" strokeWidth="58" />
         <path d={CIRCUIT} stroke="#eaf3fa" strokeWidth="3" strokeDasharray="16 14" />
         <g transform="translate(491 226)">
           <rect width="24" height="58" fill="white" />

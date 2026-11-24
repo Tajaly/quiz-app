@@ -6,6 +6,7 @@ import { TextField } from '../../design/Field';
 import { RaceScene } from '../../design/Scenery';
 import { Icon } from '../../design/sprites/Sprites';
 import { Logo } from '../../design/Widgets';
+import { ThemeSelect } from '../../design/ThemeSelect';
 
 export function PinForm({ initialError }: { initialError?: string }) {
   const navigate = useNavigate();
@@ -54,9 +55,12 @@ export function Landing() {
         <Link to="/" aria-label="Power Quiz home">
           <Logo />
         </Link>
-        <p className="hidden items-center gap-2 text-sm font-semibold text-sky sm:flex">
-          <Icon name="trophy" size={1.5} />A quiz. A race. A good time.
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="hidden items-center gap-2 text-sm font-semibold text-sky sm:flex">
+            <Icon name="trophy" size={1.5} />A quiz. A race. A good time.
+          </p>
+          <ThemeSelect />
+        </div>
       </header>
       <main className="landing-layout flex-1">
         <div className="landing-intro">

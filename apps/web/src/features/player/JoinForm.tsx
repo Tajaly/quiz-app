@@ -14,6 +14,7 @@ import { Button } from '../../design/Button';
 import { TextField } from '../../design/Field';
 import { Heading, Notice, Panel } from '../../design/Panel';
 import { Spinner } from '../../design/Widgets';
+import { ThemeSelect } from '../../design/ThemeSelect';
 import { MessageScreen } from '../landing/NotFound';
 import { KartGarage } from './KartGarage';
 
@@ -103,6 +104,9 @@ export function JoinForm({
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 px-3 py-6">
+      <div className="self-end">
+        <ThemeSelect />
+      </div>
       <div className="text-center">
         <p className="font-pixel text-[10px] text-mist">RACE PIN {pin}</p>
         <Heading className="mt-3 text-3xl">{race.quizTitle}</Heading>

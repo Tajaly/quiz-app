@@ -51,9 +51,12 @@ local join addresses are examples, not active races.
 - **Moderation** – profanity filter for nicknames and open answers, kick players, hide answers on the big screen.
 - **Results history** – every race is stored for 90 days with per-question statistics and CSV export.
 - **Retro sound** – original chiptune music and sound effects on the big screen only (mute with `M`).
+- **Light and dark modes** – use the colour-theme selector on the starting page, host screens or player
+  screens. **System** follows your device's appearance, including changes while the app is open.
+  An explicit **Light** or **Dark** choice is saved in this browser and shared across tabs.
 
-The light circuit theme uses original pixel karts, checkered curbs, sky-blue surfaces and
-high-contrast pastel answers. The garage supports keyboard selection, and spatial effects respect
+The circuit themes use original pixel karts, checkered curbs, sky-blue or midnight surfaces and
+high-contrast colour-coded answers. The garage supports keyboard selection, and spatial effects respect
 reduced-motion preferences.
 
 ## How a race works

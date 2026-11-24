@@ -4,6 +4,7 @@ import { Panel } from '../../design/Panel';
 import { Icon } from '../../design/sprites/Sprites';
 import type { IconName } from '../../design/sprites/icons';
 import { Logo } from '../../design/Widgets';
+import { ThemeSelect } from '../../design/ThemeSelect';
 
 export function MessageScreen({
   icon = 'cone',
@@ -21,6 +22,7 @@ export function MessageScreen({
       <Link to="/" aria-label="Power Quiz home">
         <Logo size="sm" />
       </Link>
+      <ThemeSelect />
       <Panel className="flex max-w-lg flex-col items-center gap-4">
         <Icon name={icon} size={6} className="text-sun-dark" />
         <h1 className="font-display text-4xl font-bold leading-tight">{title}</h1>

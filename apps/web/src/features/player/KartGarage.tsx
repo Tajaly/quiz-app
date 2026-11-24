@@ -74,7 +74,7 @@ export function KartGarage({ value, onChange }: { value: KartChoice; onChange: (
                 className="sr-only"
               />
               {selected && (
-                <span className="rounded-full bg-ink p-1 text-white">
+                <span className="rounded-full bg-on-accent p-1 text-white">
                   <Icon name="check" size={1} />
                 </span>
               )}
