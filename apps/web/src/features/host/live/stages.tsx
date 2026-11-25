@@ -89,7 +89,7 @@ export function LobbyStage({ view, onKick }: { view: HostView; onKick: (player: 
                   !player.connected && 'opacity-40',
                 )}
               >
-                <span className="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-xs font-bold text-sky">
+                <span className="absolute left-2 top-2 rounded-full bg-panel px-2 py-1 text-xs font-bold text-sky">
                   {index + 1}
                 </span>
                 <Kart kart={player.kart} scale={gridSize.scale} title={false} />
@@ -391,9 +391,9 @@ export function ScoreboardStage({ view }: { view: HostView }) {
 // ---- Final ---------------------------------------------------------------------------------
 
 const PODIUM = {
-  1: { height: 'h-[30vh]', color: 'bg-sun text-ink', delay: 1.6, scale: 6 },
-  2: { height: 'h-[21vh]', color: 'bg-[#d4e4ee] text-ink', delay: 0.8, scale: 5 },
-  3: { height: 'h-[14vh]', color: 'bg-[#f3c3a4] text-ink', delay: 0, scale: 5 },
+  1: { height: 'h-[30vh]', color: 'bg-sun text-on-accent', delay: 1.6, scale: 6 },
+  2: { height: 'h-[21vh]', color: 'bg-[#d4e4ee] text-on-accent', delay: 0.8, scale: 5 },
+  3: { height: 'h-[14vh]', color: 'bg-[#f3c3a4] text-on-accent', delay: 0, scale: 5 },
 } as const;
 
 function PodiumStep({ player, place }: { player: RankedPlayer | undefined; place: 1 | 2 | 3 }) {

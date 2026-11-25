@@ -5,6 +5,7 @@ import { Button } from '../../../design/Button';
 import { Icon } from '../../../design/sprites/Sprites';
 import type { IconName } from '../../../design/sprites/icons';
 import { Logo, Spinner } from '../../../design/Widgets';
+import { ThemeSelect } from '../../../design/ThemeSelect';
 import { cx } from '../../../lib/cx';
 import { formatPin } from '../../../lib/format';
 import { useSound } from '../../../sound/useSound';
@@ -234,6 +235,7 @@ function LiveScreen({ sessionId }: { sessionId: string }) {
           <Icon name="user" size={1.6} /> {view.playerCount}
         </span>
         <div className="flex items-center">
+          <ThemeSelect />
           {view.phase !== 'ended' && (
             <TopButton
               icon={view.locked ? 'lock' : 'unlock'}

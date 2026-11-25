@@ -65,7 +65,7 @@ function TypeToggle({
       onClick={onClick}
       className={cx(
         'min-h-11 rounded-lg px-3 py-2 text-sm font-bold transition-colors',
-        active ? 'bg-sun text-ink' : 'bg-surface text-mist hover:text-sky',
+        active ? 'bg-sun text-on-accent' : 'bg-surface text-mist hover:text-sky',
       )}
     >
       {children}
@@ -175,7 +175,7 @@ function QuestionCard({
                       value={option.text}
                       maxLength={LIMITS.optionTextMax}
                       placeholder={`Answer ${style.label}${optionIndex >= LIMITS.optionsMin ? ' (optional)' : ''}`}
-                      className="min-w-0 flex-1 rounded-lg bg-white px-2 py-2 text-base text-ink placeholder:text-mist"
+                      className="min-w-0 flex-1 rounded-lg bg-panel px-2 py-2 text-base text-ink placeholder:text-mist"
                       onChange={(event) =>
                         onChange((q) =>
                           q.type === 'mc'
@@ -200,8 +200,8 @@ function QuestionCard({
                       className={cx(
                         'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
                         correct
-                          ? 'bg-leaf text-white'
-                          : 'bg-white text-mist hover:bg-lime-soft hover:text-leaf',
+                          ? 'bg-leaf text-panel'
+                          : 'bg-panel text-mist hover:bg-lime-soft hover:text-leaf',
                       )}
                     >
                       <Icon name="check" size={2} />
@@ -220,7 +220,7 @@ function QuestionCard({
                             return { ...q, options, correctOptionId };
                           })
                         }
-                        className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-white"
+                        className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-panel"
                       >
                         <Icon name="cross" size={1.6} />
                       </button>

@@ -7,10 +7,10 @@ export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'gh
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-sun text-ink hover:bg-[#ffe18a]',
+  primary: 'bg-sun text-on-accent hover:bg-[#ffe18a]',
   secondary: 'bg-sky-soft text-sky-dark hover:bg-surface-strong',
-  danger: 'bg-flame text-white hover:bg-flame-dark',
-  success: 'bg-lime text-ink hover:bg-[#a8df89]',
+  danger: 'bg-danger text-white hover:bg-danger-hover',
+  success: 'bg-lime text-on-accent hover:bg-[#a8df89]',
   ghost: 'rounded-xl bg-transparent text-mist hover:bg-sky-soft hover:text-ink',
 };
 

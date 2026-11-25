@@ -15,6 +15,7 @@ import { Notice } from '../../design/Panel';
 import { StartingLine } from '../../design/Scenery';
 import { Icon, Kart } from '../../design/sprites/Sprites';
 import { Confetti, TimerBar, TrafficLight, lightStateFor } from '../../design/Widgets';
+import { ThemeSelect } from '../../design/ThemeSelect';
 import { cx } from '../../lib/cx';
 import { formatPoints, ordinal } from '../../lib/format';
 import { useRemainingMs, type Timed } from '../../lib/socket';
@@ -40,6 +41,7 @@ export function PlayerHeader({ view, online }: { view: PlayerView; online: boole
           <p className="font-pixel text-sm text-sun-dark">{formatPoints(view.me.score)}</p>
           {showRank && <p className="text-xs text-mist">{ordinal(view.me.rank)} place</p>}
         </div>
+        <ThemeSelect />
       </div>
       {!online && (
         <p role="status" className="bg-flame-soft px-3 py-2 text-center text-sm font-bold text-flame-dark">
@@ -236,7 +238,7 @@ function Question({
           )}
         </div>
       ) : submitted ? (
-        <div className="px-frame m-1 bg-white p-4 text-xl font-bold text-ink">“{submitted.text}”</div>
+        <div className="px-frame m-1 bg-panel p-4 text-xl font-bold text-ink">“{submitted.text}”</div>
       ) : (
         <form onSubmit={submitText} className="flex flex-col gap-3">
           <TextField
@@ -320,7 +322,7 @@ function Result({ view }: { view: PlayerView }) {
     );
   } else if (result.correct) {
     card = (
-      <div className="animate-pop flex flex-col items-center gap-3 rounded-2xl bg-lime p-6 text-center text-ink">
+      <div className="animate-pop flex flex-col items-center gap-3 rounded-2xl bg-lime p-6 text-center text-on-accent">
         <Icon name="check" size={6} />
         <p className="font-pixel text-xl">Correct!</p>
         <p className="font-pixel text-3xl">+{formatPoints(result.points)}</p>

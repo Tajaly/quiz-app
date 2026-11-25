@@ -39,7 +39,7 @@ export function TimerBar({
         aria-valuenow={seconds}
       >
         {Array.from({ length: segments }, (_, index) => (
-          <span key={index} className={cx('h-full flex-1 rounded-xs', index < filled ? color : 'bg-white')} />
+          <span key={index} className={cx('h-full flex-1 rounded-xs', index < filled ? color : 'bg-panel')} />
         ))}
       </div>
       <span
@@ -74,7 +74,7 @@ export function TrafficLight({ state, size = 'lg' }: { state: LightState; size?:
   ];
   return (
     <div className="flex flex-col items-center gap-4" role="status" aria-live="assertive">
-      <div className="flex gap-3 rounded-2xl bg-ink p-3 shadow-card sm:gap-4 sm:p-4">
+      <div className="flex gap-3 rounded-2xl bg-on-accent p-3 shadow-card sm:gap-4 sm:p-4">
         {lamps.map((item, index) => (
           <span
             key={index}

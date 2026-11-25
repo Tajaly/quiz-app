@@ -6,6 +6,7 @@ import { TextField } from '../../design/Field';
 import { Notice, Panel } from '../../design/Panel';
 import { RaceScene } from '../../design/Scenery';
 import { Logo, Spinner } from '../../design/Widgets';
+import { ThemeSelect } from '../../design/ThemeSelect';
 
 function SignInScreen() {
   const auth = useAuth();
@@ -26,6 +27,9 @@ function SignInScreen() {
       <Link to="/" className="self-center" aria-label="Power Quiz home">
         <Logo />
       </Link>
+      <div className="self-end">
+        <ThemeSelect />
+      </div>
       <Panel title="Host sign-in">
         {auth.mode === 'entra' ? (
           <div className="flex flex-col gap-4">
